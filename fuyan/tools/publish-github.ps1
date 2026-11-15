@@ -10,7 +10,7 @@
 #   .\tools\publish-github.ps1 -Repo makainuo/fuyan -Tag v0.1.0
 #
 param(
-  [string]$Repo = "makainuo/fuyan",
+  [string]$Repo = "makainuo/fuyan-app",
   [string]$Tag = "",
   [switch]$DryRun,
   [switch]$Private
@@ -61,7 +61,7 @@ Write-Host "   检查：无批注 / 对话 / 配置等用户数据" -ForegroundC
 
 Write-Host "== 2/5 生成在线存档清单 ==" -ForegroundColor Cyan
 $env:PYTHONIOENCODING = "utf-8"
-& node (Join-Path $root "tools\make-catalog.mjs") --repo $Repo --out $dist
+& node (Join-Path $root "tools\make-catalog.mjs") --base "https://cdn.jsdelivr.net/gh/$Repo@master/fuyan/dist" --out $dist
 if ($LASTEXITCODE -ne 0) { throw "生成 archives.json 失败" }
 
 if ($DryRun) {
@@ -100,4 +100,4 @@ if ($LASTEXITCODE -ne 0) { Write-Host "  Release 创建失败（可能已存在�
 
 Write-Host "`n完成。把下面两行填进「设置」：" -ForegroundColor Green
 Write-Host ("  软件更新 → GitHub 仓库： " + $Repo)
-Write-Host ("  在线存档库： https://cdn.jsdelivr.net/gh/$Repo@main/dist/archives.json")
+Write-Host ("  在线存档库： https://cdn.jsdelivr.net/gh/$Repo@master/fuyan/dist/archives.json")
