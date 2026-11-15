@@ -1,0 +1,65 @@
+/* 复研 · 注入到存档文档里的覆盖样式（批注高亮 / 动效 / 少量修正） */
+
+/* ---------- 押题标记（名解 / 简答 / 病例） ---------- */
+.tag.exam{background:#b4552d;color:#fff;border:0}
+.tag.exam.exam-b{background:transparent;color:#b4552d;box-shadow:inset 0 0 0 1px #d8a58a}
+.fy-exam-note{border-left:3px solid #b4552d;background:color-mix(in srgb, var(--panel) 90%, #b4552d 10%)}
+.fy-exam-note b{color:#b4552d}
+.flashcard[data-exam]{border-color:#b4552d}
+.flashcard[data-exam] .flash-front{position:relative}
+.flashcard[data-exam] .flash-front::after{content:"押题";position:absolute;top:8px;right:8px;font-size:10px;line-height:1;background:#b4552d;color:#fff;border-radius:999px;padding:3px 6px;letter-spacing:.06em}
+.flashcard[data-exam="backup"] .flash-front::after{content:"备选";background:transparent;color:#b4552d;box-shadow:inset 0 0 0 1px #d8a58a}
+details[data-exam="main"]{border-left:3px solid #b4552d;padding-left:14px}
+details[data-exam="backup"]{border-left:3px solid #d8a58a;padding-left:14px}
+.mini-case[data-exam]{border-left:3px solid #d8a58a}
+
+/* ---------- 批注高亮（CSS Custom Highlight API） ---------- */
+::highlight(fy-note) {
+  background-color: rgba(250, 204, 21, .34);
+}
+::highlight(fy-ai) {
+  background-color: rgba(59, 130, 246, .26);
+}
+::highlight(fy-active) {
+  background-color: rgba(250, 204, 21, .72);
+  text-decoration: underline;
+  text-decoration-color: rgba(180, 83, 9, .8);
+  text-decoration-thickness: 2px;
+}
+::highlight(fy-search) {
+  background-color: rgba(15, 118, 110, .32);
+}
+
+/* ---------- 跳转闪烁 ---------- */
+.fy-flash {
+  animation: fyFlash 1.6s ease;
+  border-radius: 6px;
+}
+@keyframes fyFlash {
+  0% { background-color: rgba(250, 204, 21, .55); }
+  100% { background-color: transparent; }
+}
+
+/* ---------- 名解卡：只看英文自测 ---------- */
+.cards.quiz-mode .card .zh,
+.cards.quiz-mode .card .def {
+  visibility: hidden;
+}
+.cards.quiz-mode .card .face.front .hint,
+.cards.quiz-mode .card .face.back .hint {
+  visibility: hidden;
+}
+.card.mastered {
+  box-shadow: 0 0 0 2px rgba(21, 128, 61, .45);
+}
+.card .mark.mastered {
+  background: rgba(21, 128, 61, .12);
+  color: #15803d;
+}
+
+/* ---------- 让内容在 iframe 里更稳 ---------- */
+/* 不做平滑滚动：恢复阅读位置 / 跳章节时整页“从上往下翻”会晕 */
+html {
+  scroll-behavior: auto;
+}
+img { max-width: 100%; height: auto; }

@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>复研 MedReview · 介绍</title>
+<style>
+  @page { size: A4; margin: 0; }
+  :root{
+    --paper:#F7F3EA; --ink:#1B2A26; --muted:#6E7C76; --line:#DDD5C4;
+    --accent:#0F5B4F; --soft:#E4EFEA; --warm:#B4552D;
+    --sans:"Noto Sans SC","Microsoft YaHei UI","Microsoft YaHei",sans-serif;
+    --serif:"Noto Serif SC","Songti SC",serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:#d9d4c8}
+  body{font-family:var(--sans);color:var(--ink);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .page{
+    position:relative;width:210mm;height:297mm;background:var(--paper);
+    padding:20mm 20mm 16mm;margin:0 auto;overflow:hidden;
+    page-break-after:always;break-after:page;
+    display:flex;flex-direction:column;
+  }
+  .page:last-child{page-break-after:auto;break-after:auto}
+  @media screen{ .page{margin:8mm auto;box-shadow:0 6px 24px rgba(0,0,0,.18)} }
+
+  .run{display:flex;justify-content:space-between;font-size:7.5pt;letter-spacing:.18em;color:var(--muted);text-transform:uppercase}
+  .pno{position:absolute;right:20mm;bottom:9mm;font-size:8pt;color:var(--muted);letter-spacing:.1em}
+  .pno b{color:var(--ink);font-weight:600}
+
+  .eyebrow{display:flex;align-items:center;gap:8px;font-size:8.5pt;letter-spacing:.2em;color:var(--accent);font-weight:600}
+  .eyebrow i{width:14px;height:14px;background:var(--accent);display:inline-block}
+  h1{font-family:var(--serif);font-weight:700;line-height:1.02;margin:0;letter-spacing:-.01em}
+  h2{font-family:var(--serif);font-weight:700;font-size:30pt;line-height:1.24;margin:0}
+  h3{font-size:11.5pt;font-weight:700;margin:0 0 2.5mm}
+  p{margin:0}
+  .lead{font-size:12pt;line-height:1.9;color:#33403B}
+  .body{font-size:10pt;line-height:1.95;color:#3A4741}
+  .small{font-size:8.6pt;line-height:1.8;color:var(--muted)}
+
+  /* 页头 */
+  .head{margin-top:16mm}
+  .head h2{margin-top:6mm;max-width:160mm}
+  .head .lead{margin-top:5mm;max-width:150mm}
+
+  /* 封面 */
+  .cover{padding:0;display:block}
+  .cover .top{position:absolute;left:20mm;right:20mm;top:16mm;display:flex;justify-content:space-between;align-items:flex-start}
+  .cover .mark{display:flex;align-items:center;gap:10px}
+  .cover .mark .logo{width:30px;height:30px;border-radius:8px;background:var(--accent);color:#fff;display:grid;place-items:center;
+    font-family:var(--serif);font-size:15pt;font-weight:700}
+  .cover .mark .n{font-size:9pt;letter-spacing:.26em}
+  .cover .mark .n small{display:block;font-size:7pt;letter-spacing:.2em;color:var(--muted);margin-top:2px}
+  .cover .meta{text-align:right;font-size:8pt;color:var(--muted);line-height:1.9;letter-spacing:.06em}
+  .cover .stage{position:absolute;left:20mm;right:20mm;top:54mm}
+  .cover h1{font-size:78pt}
+  .cover .sub{font-family:var(--serif);font-size:23pt;line-height:1.5;margin-top:8mm;color:#22302B}
+  .cover .desc{font-size:10.5pt;line-height:1.95;color:#4A5650;margin-top:6mm;max-width:132mm}
+  .cover .card{position:absolute;right:24mm;top:160mm;width:56mm;background:#FCFAF4;border:1px solid var(--line);
+    border-radius:2.5mm;padding:5.5mm;transform:rotate(-4deg);box-shadow:0 10px 28px rgba(27,42,38,.14);z-index:3}
+  .cover .card .k{font-size:7.4pt;letter-spacing:.2em;color:var(--accent)}
+  .cover .card .t{font-family:var(--serif);font-size:16pt;margin-top:2mm;line-height:1.3}
+  .cover .card .s{font-size:7.2pt;color:var(--muted);margin-top:3mm;letter-spacing:.02em}
+  .cover .shotwrap{position:absolute;left:20mm;right:20mm;bottom:20mm;height:104mm;overflow:hidden;border-radius:3mm;
+    border:1px solid rgba(0,0,0,.06);box-shadow:0 8px 30px rgba(27,42,38,.16)}
+  .cover .shotwrap img{width:100%;display:block}
+  .cover .shotwrap:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(247,243,234,0) 50%,rgba(247,243,234,.98) 100%)}
+  .cover .tag{position:absolute;left:20mm;bottom:11mm;font-size:8pt;color:var(--muted);letter-spacing:.06em}
+
+  /* 通用 */
+  .grow{flex:1 1 auto}
+  .shot{border-radius:2.5mm;overflow:hidden;box-shadow:0 2px 12px rgba(27,42,38,.14);border:1px solid rgba(0,0,0,.05);background:#fff;flex:none}
+  .shot img{width:100%;display:block}
+  .cap{font-size:7.6pt;color:var(--muted);margin-top:2.5mm;letter-spacing:.03em}
+
+  /* 问题 */
+  .pains{margin-top:10mm;display:flex;flex-direction:column;gap:9mm}
+  .pain{display:grid;grid-template-columns:18mm 1fr;gap:6mm;align-items:start}
+  .pain .no{font-family:var(--serif);font-size:30pt;color:#CFC6B2;line-height:.9}
+  .pain .body{max-width:142mm}
+  .result{background:var(--soft);border-left:3px solid var(--accent);padding:7mm 9mm;
+    font-family:var(--serif);font-size:15pt;line-height:1.75;margin-bottom:2mm}
+
+  /* 存档图 */
+  .arch{margin-top:9mm;display:flex;align-items:center;gap:4mm}
+  .stack{display:flex;flex-direction:column;gap:2.5mm;flex:1}
+  .file{border:1px solid var(--line);background:#FCFAF4;border-radius:2mm;padding:3.4mm 4mm;display:flex;justify-content:space-between;align-items:center}
+  .file b{font-size:9.6pt;font-family:var(--serif)}
+  .file span{font-size:7.8pt;color:var(--muted)}
+  .arrow{font-size:15pt;color:#C9BFAA}
+  .archive{border:1.5px solid var(--accent);background:#FBFDFB;border-radius:2.5mm;padding:6mm 4mm;text-align:center;min-width:42mm}
+  .archive .t{font-family:var(--serif);font-size:18pt;color:var(--accent)}
+  .archive .s{font-size:7.6pt;color:var(--muted);margin-top:2mm}
+  .shell{border:1px solid var(--line);border-radius:2.5mm;padding:6mm 4mm;text-align:center;min-width:38mm;background:#FCFAF4}
+  .shell .t{font-family:var(--serif);font-size:13pt}
+  .shell .s{font-size:7.4pt;color:var(--muted);margin-top:2mm}
+
+  .cols3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7mm;margin-top:9mm}
+  .col b{display:block;font-size:10pt;margin-bottom:2mm}
+  .col .body{font-size:9pt;line-height:1.85;color:#43504A}
+
+  .compare{margin-top:10mm;border-top:1px solid var(--line);padding-top:5mm;display:grid;grid-template-columns:1fr 1fr;gap:8mm}
+  .compare .c{font-size:9pt;line-height:1.85;color:var(--muted)}
+  .compare .c b{display:block;color:var(--ink);font-size:9.6pt;margin-bottom:1.5mm}
+  .compare .new{color:#2A3B35;background:var(--soft);padding:5mm 6mm;border-radius:2mm}
+  .compare .new b{color:var(--accent)}
+  .pullquote{margin:auto 0 8mm;text-align:center;font-family:var(--serif);font-size:15pt;color:#2A3B35;line-height:1.8}
+  .pullquote:before,.pullquote:after{content:"";display:block;width:24mm;height:1px;background:var(--line);margin:5mm auto}
+  .forwho{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7mm;margin-top:9mm}
+  .forwho b{display:block;font-size:9.8pt;margin-bottom:1.5mm}
+  .forwho span{font-size:8.6pt;line-height:1.75;color:var(--muted)}
+  .ex{margin-top:9mm;display:flex;flex-direction:column;gap:3mm;max-width:138mm}
+  .ex .u{align-self:flex-start;background:var(--soft);border-radius:2mm;padding:3mm 4.5mm;font-size:9.4pt;color:#2A3B35}
+  .ex .a{align-self:flex-start;font-size:9.2pt;line-height:1.9;color:#3A4741;border-left:2px solid var(--accent);padding:1mm 0 1mm 4.5mm}
+  .ex .who{font-size:7.4pt;letter-spacing:.16em;color:var(--muted);margin-bottom:1mm}
+  .two{display:grid;grid-template-columns:1fr 1.32fr;gap:7mm;margin-top:7mm;align-items:start}
+  .callout{margin-top:auto;background:var(--soft);border-left:3px solid var(--accent);padding:6mm 8mm;
+    font-size:10pt;line-height:1.95;color:#2A3B35}
+  .callout b{color:var(--accent)}
+  .steps-h{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7mm;margin-top:8mm}
+  .steps-h .s{border-top:2px solid var(--accent);padding-top:3mm}
+  .steps-h .n{font-family:var(--serif);font-size:13pt;color:var(--accent);letter-spacing:.08em}
+  .steps-h b{display:block;font-size:9.4pt;margin:1.5mm 0 1mm}
+  .steps-h span{font-size:8.4pt;color:var(--muted);line-height:1.7}
+
+  /* 功能页 */
+  .feat2{display:grid;grid-template-columns:1fr 1fr;gap:6mm 10mm;margin-top:8mm}
+  .f{display:grid;grid-template-columns:2.6mm 1fr;gap:3.6mm}
+  .f i{width:2.6mm;height:2.6mm;margin-top:2.4mm;background:var(--accent);display:block}
+  .f b{font-size:10.2pt;display:block;margin-bottom:1mm}
+  .f span{font-size:9pt;line-height:1.8;color:#43504A}
+  .stat{display:flex;align-items:flex-end;gap:4mm;margin:2mm 0 0}
+  .stat .n{font-family:"Segoe UI",var(--sans);font-size:56pt;font-weight:800;color:var(--accent);line-height:.8;letter-spacing:-.03em}
+  .stat .u{font-size:9pt;color:var(--muted);margin-bottom:2.5mm;line-height:1.5}
+
+  /* 通道 */
+  .ways{display:grid;grid-template-columns:1fr 1fr;gap:4.5mm;margin-top:8mm}
+  .way{border:1px solid var(--line);border-radius:2.5mm;padding:5mm 5.5mm;background:#FCFAF4}
+  .way .k{font-size:7.4pt;letter-spacing:.2em;color:var(--accent);margin-bottom:1.8mm}
+  .way b{font-size:10.6pt;display:block;margin-bottom:1.2mm}
+  .way .small{font-size:8.2pt;line-height:1.7}
+  .note{margin-top:5mm;font-size:8.6pt;color:var(--muted);line-height:1.8}
+
+  /* 上手 */
+  .steps{display:grid;gap:7mm;margin-top:8mm}
+  .step{display:grid;grid-template-columns:11mm 1fr;gap:5mm;align-items:start}
+  .step .d{width:11mm;height:11mm;border-radius:50%;border:1.5px solid var(--accent);color:var(--accent);
+    display:grid;place-items:center;font-family:var(--serif);font-size:13pt}
+  .step b{font-size:11pt;display:block;margin-bottom:1mm}
+  .benefits{display:grid;grid-template-columns:1fr 1fr;gap:4.5mm 9mm;margin-top:9mm;border-top:1px solid var(--line);padding-top:6mm}
+  .benefit{display:grid;grid-template-columns:2.6mm 1fr;gap:3.4mm}
+  .benefit i{width:2.6mm;height:2.6mm;margin-top:2.3mm;background:var(--accent);display:block}
+  .benefit b{font-size:9.6pt;display:block}
+  .benefit span{font-size:8.4pt;color:var(--muted);line-height:1.7}
+  .end{margin-top:auto;border-top:1px solid var(--line);padding-top:6mm;display:flex;justify-content:space-between;align-items:flex-end}
+  .end .say{font-family:var(--serif);font-size:16pt;line-height:1.7}
+  .end .link{text-align:right;font-size:8.2pt;color:var(--muted);line-height:1.9}
+  .end .link b{color:var(--ink);font-size:9pt}
+</style>
+</head>
+<body>
+
+<!-- 1 封面 -->
+<section class="page cover">
+  <div class="top">
+    <div class="mark">
+      <div class="logo">复</div>
+      <div class="n">复研<small>MEDREVIEW</small></div>
+    </div>
+    <div class="meta">Windows 桌面软件<br>v0.1.2 · 本地运行</div>
+  </div>
+
+  <div class="stage">
+    <div class="eyebrow"><i></i>复习站 → 能读、能刷、能问的软件</div>
+    <h1 style="margin-top:9mm">复研</h1>
+    <div class="sub">把复习站，<br>变成能刷题的软件。</div>
+    <p class="desc">
+      一个很小的外壳，加若干「存档」：一门课的内容和题库都装在里面。
+      导入之后，能读、能刷题、能在原文上批注，也能选中一段直接问 AI。
+    </p>
+  </div>
+
+  <div class="card">
+    <div class="k">一个存档</div>
+    <div class="t">内容<br>+ 题库</div>
+    <div class="s">manifest · content · questions</div>
+  </div>
+
+  <div class="shotwrap"><img src="screens/02-reader.png" alt="阅读界面"></div>
+  <div class="tag">软件不含课程内容 · 换课只换存档 · 批注与进度存在本机</div>
+</section>
+
+<!-- 2 问题 -->
+<section class="page">
+  <div class="run"><span>复研 MedReview</span><span>01 · 问题</span></div>
+  <div class="head">
+    <div class="eyebrow"><i></i>先说问题</div>
+    <h2>复习资料的三件麻烦事</h2>
+    <p class="lead">不是不努力，是工具之间接不上：读的是一套，练的是另一套，想回头找又找不到。</p>
+  </div>
+
+  <div class="pains">
+    <div class="pain">
+      <div class="no">01</div>
+      <div>
+        <h3>资料是散的</h3>
+        <p class="body">PDF、课件、网页、学长笔记各在一处。读的时候很顺，合上就忘；想找某个数字，得把四五个文件翻一遍。</p>
+      </div>
+    </div>
+    <div class="pain">
+      <div class="no">02</div>
+      <div>
+        <h3>复习站只能读</h3>
+        <p class="body">排版好看、内容也全，但页面里没有题。看完一章，不知道自己到底会不会，只能再去找题库。</p>
+      </div>
+    </div>
+    <div class="pain">
+      <div class="no">03</div>
+      <div>
+        <h3>刷题 App 换课就重来</h3>
+        <p class="body">题库写死在软件里。想换一门课，要么等作者更新，要么重新导入、重新整理，之前的批注和进度也带不走。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="grow"></div>
+  <div class="result">读的时候很顺，做题的时候很慌——中间缺一个把「内容」和「练习」放在一起的东西。</div>
+  <div class="pno"><b>02</b> / 09</div>
+</section>
+
+<!-- 3 思路 -->
+<section class="page">
+  <div class="run"><span>复研 MedReview</span><span>02 · 做法</span></div>
+  <div class="head">
+    <div class="eyebrow"><i></i>我们的做法</div>
+    <h2>把「软件」和「课程」拆开</h2>
+    <p class="lead">复研本身不含任何课程内容。它只做一件事：读一种叫「存档」的文件夹。内容、题库、样式都在存档里，软件只负责把它们用起来。</p>
+  </div>
+
+  <div class="arch">
+    <div class="stack">
+      <div class="file"><b>manifest.json</b><span>标题 · 导航 · 版本</span></div>
+      <div class="file"><b>content.html</b><span>正文 + 原站样式</span></div>
+      <div class="file"><b>questions.json</b><span>题库 · 答案 · 解析</span></div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="archive"><div class="t">存档</div><div class="s">一门课的全部内容</div></div>
+    <div class="arrow">→</div>
+    <div class="shell"><div class="t">复研</div><div class="s">读 · 刷 · 批注 · 问</div></div>
+  </div>
+
+  <div class="cols3">
+    <div class="col"><b>换课，不换软件</b><div class="body">换一门课只是换一个存档文件夹。软件不用重装，批注和进度按存档分开存。</div></div>
+    <div class="col"><b>内容还是原样</b><div class="body">正文就是原来的复习站，折叠、翻转、速查表原样保留，不需要重新排版。</div></div>
+    <div class="col"><b>存档可以流通</b><div class="body">本地导入、链接导入、从 GitHub 下载，或从作者网盘拿。别人做好一门课，导入就能用。</div></div>
+  </div>
+
+  <div class="grow"></div>
+  <div class="pullquote">课不是一个标签，<br>而是一个可以拷走的文件夹。</div>
+  <div class="compare">
+    <div class="c"><b>旧的做法</b>内容在一个地方，练习在另一个地方，批注在第三个地方。每换一门课，三样都要重新来一遍。</div>
+    <div class="c new"><b>复研的做法</b>内容、题库、批注、进度都跟在「存档」里。换课，只是换一个文件夹。</div>
+  </div>
+  <div class="pno"><b>03</b> / 09</div>
+</section>
+
+<!-- 4 阅读 -->
+<section class="page">
+  <div class="run"><span>复研 MedReview</span><span>03 · 阅读</span></div>
+  <div class="head">
+    <div class="eyebrow"><i></i>功能 · 阅读</div>
+    <h2>像读原来的复习站，但更顺手</h2>
+  </div>
+
+  <div class="feat2">
+    <div class="f"><i></i><div><b>原站样式原样保留</b><span>折叠答案、名词卡翻转、易混表速查，都是你熟悉的样子。</span></div></div>
+    <div class="f"><i></i><div><b>章节跳转 + 滚动联动</b><span>侧栏点章节直接到，读到哪一节侧栏跟到哪一节。</span></div></div>
+    <div class="f"><i></i><div><b>记住你读到哪</b><span>关掉再打开，直接回到上次的位置，不会从头再翻。</span></div></div>
+    <div class="f"><i></i><div><b>全文搜索</b><span>Ctrl+K 搜章节、小标题、题目和批注，回车直达。</span></div></div>
+    <div class="f"><i></i><div><b>深色模式与字号</b><span>晚上看、投屏看，都能调。</span></div></div>
+    <div class="f"><i></i><div><b>阅读进度</b><span>顶部细条显示读了多少，心里有数。</span></div></div>
+  </div>
+
+  <div class="grow"></div>
+  <div class="shot"><img src="screens/02-reader.png" alt="阅读"></div>
+  <div class="cap">阅读界面：左侧目录、正文原样、右下角随时问 AI</div>
+  <div class="pno"><b>04</b> / 09</div>
+</section>
+
+<!-- 5 刷题 -->
+<section class="page">
+  <div class="run"><span>复研 MedReview</span><span>04 · 刷题</span></div>
+  <div class="head">
+    <div class="eyebrow"><i></i>功能 · 刷题</div>
+    <h2>题目就在同一个存档里</h2>
+    <p class="lead">读完就能做题，不用切软件、不用再对答案。做题记录和错题跟着存档走。</p>
+  </div>
+
+  <div class="stat" style="margin-top:4mm">
+    <div class="n">196</div>
+    <div class="u">题 / 一门课<br>（示例：传染病学）</div>
+  </div>
+
+  <div class="feat2" style="grid-template-columns:1fr 1fr;margin-top:6mm">
+    <div class="f"><i></i><div><b>顺序或随机</b><span>按章节顺着刷，或打乱顺序自测。</span></div></div>
+    <div class="f"><i></i><div><b>快速 / 正常 / 背题</b><span>三种节奏，背题模式直接给答案和解析。</span></div></div>
+    <div class="f"><i></i><div><b>错题永久保留</b><span>错过的题一直算错，做对也不消失。</span></div></div>
+    <div class="f"><i></i><div><b>断点续刷</b><span>关掉再打开接着上一题，题号面板一键跳转。</span></div></div>
+  </div>
+
+  <div class="grow"></div>
+  <div class="shot" style="max-width:150mm;margin:0 auto"><img src="screens/quiz-crop.png" alt="刷题"></div>
+  <div class="cap" style="text-align:center">答题界面：即时判定、答案解析、题号面板</div>
+  <div class="pno"><b>05</b> / 09</div>
+</section>
+
+<!-- 6 批注 + AI -->
+<section class="page">
+  <div class="run"><span>复研 MedReview</span><span>05 · 批注与 AI</span></div>
+  <div class="head">
+    <div class="eyebrow"><i></i>功能 · 批注与 AI</div>
+    <h2>不懂的地方，选中就能问</h2>
+    <p class="lead">看不懂的词，选中就有答案；写下来的批注，永远在原文旁边。</p>
+  </div>
+
+  <div class="two">
+    <div>
+      <div class="shot"><img src="screens/bubble-crop.png" alt="选中提问"></div>
+      <div class="cap">① 选中文字，气泡里点「问 DeepSeek」</div>
+    </div>
+    <div>
+      <div class="shot"><img src="screens/14-ai-answer.png" alt="AI 回答"></div>
+      <div class="cap">② 侧栏直接给答案：定义、关键点、易混、易错</div>
+    </div>
+  </div>
+
+  <div class="feat2" style="margin-top:7mm">
+    <div class="f"><i></i><div><b>三种动作，一步到位</b><span>写自己的批注、直接问 AI、或在站内搜索这个词。</span></div></div>
+    <div class="f"><i></i><div><b>批注贴着原文</b><span>高亮常驻原位置，重开软件还在；同一段只留一条。</span></div></div>
+    <div class="f"><i></i><div><b>追问接在后面</b><span>再问同一段，接着原来的对话往下聊，不新开一条。</span></div></div>
+    <div class="f"><i></i><div><b>对话可以回看</b><span>记录面板能看到每条对话，关掉软件也在。</span></div></div>
+  </div>
+
+  <div class="ex" style="margin-top:7mm">
+    <div>
+      <div class="who">你追问</div>
+      <div class="u">那它和「波状热」怎么区分？</div>
+    </div>
+    <div>
+      <div class="who">DEEPSEEK</div>
+      <div class="a">波状热是体温逐渐升高又逐渐下降，像波浪；稽留热是持续高热、24 小时波动不超过 1℃。</div>
+    </div>
+  </div>
+
+  <div class="grow"></div>
+  <div class="callout">选中同一段文字再打开，看到的是<b>原来那条批注的完整对话</b>，追问接在末尾——上下文不断，也不会越堆越多。</div>
+  <div class="pno"><b>06</b> / 09</div>
+</section>
+
+<!-- 7 DeepSeek -->
+<section class="page">
+  <div class="run"><span>复研 MedReview</span><span>06 · DeepSeek</span></div>
+  <div class="head">
+    <div class="eyebrow"><i></i>亮点 · 用你自己的 DeepSeek</div>
+    <h2>AI 不是租来的，是你自己的</h2>
+    <p class="lead">复研不代收 AI 费用，也不经过作者服务器。设置一次 API Key，之后每个提问都从你自己的账号走。</p>
+  </div>
+
+  <div class="shot" style="max-width:132mm;margin:6mm auto 0"><img src="screens/15-ai-settings.png" alt="DeepSeek 设置"></div>
+  <div class="cap" style="text-align:center">设置 → DeepSeek：填 Key、选模型、点「测试连接」</div>
+
+  <div class="steps-h">
+    <div class="s"><div class="n">01</div><b>创建 Key</b><span>打开 platform.deepseek.com，登录后创建一个 API Key（sk-…）。</span></div>
+    <div class="s"><div class="n">02</div><b>粘贴保存</b><span>回「设置 → DeepSeek」粘贴保存；模型默认 deepseek-flash。</span></div>
+    <div class="s"><div class="n">03</div><b>测试连接</b><span>点「测试连接」确认可用，之后选区提问直接走你的账号。</span></div>
+  </div>
+
+  <div class="feat2" style="margin-top:8mm">
+    <div class="f"><i></i><div><b>数据不出本机</b><span>Key 只存这台电脑；请求由软件自己的本地服务转发，网页里拿不到。</span></div></div>
+    <div class="f"><i></i><div><b>按自己的用量付费</b><span>没有中间商加价，用多少扣多少，也没有“额度用完了”的墙。</span></div></div>
+    <div class="f"><i></i><div><b>模型可选</b><span>deepseek-flash 快而便宜；需要更强推理可以换更强的模型。</span></div></div>
+    <div class="f"><i></i><div><b>没配也不卡住</b><span>点 AI 会弹出引导，告诉你三步怎么配，不会静默失败。</span></div></div>
+  </div>
+
+  <div class="grow"></div>
+  <div class="callout"><b>为什么不是“扫码登录”？</b>DeepSeek 官方只提供 API Key，没有扫码授权；所谓“扫码就能用、作者统一扣费”，需要作者自建后端账号体系，那是另一套产品。复研选了更简单也更透明的方式：<b>你自己拿 Key，自己付钱，数据只在本地。</b></div>
+  <div class="pno"><b>07</b> / 09</div>
+</section>
+
+<!-- 7 通道 -->
+<section class="page">
+  <div class="run"><span>复研 MedReview</span><span>07 · 存档从哪来</span></div>
+  <div class="head">
+    <div class="eyebrow"><i></i>存档从哪来</div>
+    <h2>现成的直接用，自己的随时发</h2>
+  </div>
+
+  <div class="ways">
+    <div class="way"><div class="k">LOCAL</div><b>本地导入</b><div class="small">把存档 zip 拖进软件，或选文件夹导入。自己做课也一样。</div></div>
+    <div class="way"><div class="k">LINK</div><b>链接导入</b><div class="small">粘贴一个 http/https 直链，软件下载后自动导入。</div></div>
+    <div class="way"><div class="k">GITHUB</div><b>在线存档</b><div class="small">作者把存档清单放在 GitHub，软件里点一下就能下载最新版。</div></div>
+    <div class="way"><div class="k">QUARK</div><b>网盘（作者通道）</b><div class="small">作者的夸克网盘目录直接列出，同名新包顶替，旧包自动归档。</div></div>
+  </div>
+
+  <div class="grow"></div>
+  <div class="shot" style="max-width:156mm;margin:0 auto"><img src="screens/12-github-catalog.png" alt="在线存档"></div>
+  <div class="cap" style="text-align:center">存档库：作者发布的存档直接列出，已安装的会标出来</div>
+  <div class="note">批注、进度、对话都存在本机（<span style="font-family:Consolas,monospace">%APPDATA%\fuyan</span>），覆盖安装新版本也不会丢；存档包本身不带任何个人数据。</div>
+  <div class="pno"><b>08</b> / 09</div>
+</section>
+
+<!-- 8 上手 -->
+<section class="page">
+  <div class="run"><span>复研 MedReview</span><span>08 · 上手</span></div>
+  <div class="head">
+    <div class="eyebrow"><i></i>上手</div>
+    <h2>三步开始</h2>
+  </div>
+
+  <div class="steps">
+    <div class="step"><div class="d">1</div><div><b>解压，双击启动</b><span class="body">一个文件夹，双击「启动复研」就有桌面图标；需要本机装 Node.js 18+。第二次打开会直接聚焦已有窗口。</span></div></div>
+    <div class="step"><div class="d">2</div><div><b>导入一门课的存档</b><span class="body">从「存档库」导入 zip，或从 GitHub 在线存档里挑一份，几秒钟就绪。</span></div></div>
+    <div class="step"><div class="d">3</div><div><b>读、刷、问</b><span class="body">读的时候选中不懂的词直接问；读完去刷题；错题留着，考前再刷一遍。</span></div></div>
+  </div>
+
+  <div class="benefits">
+    <div class="benefit"><i></i><div><b>内容与软件分离</b><span>换课不换软件，软件可以一直用下去</span></div></div>
+    <div class="benefit"><i></i><div><b>复用已有复习站</b><span>不用重做内容，原排版原交互直接用</span></div></div>
+    <div class="benefit"><i></i><div><b>本地优先</b><span>批注、进度、对话不上云，数据自己拿着</span></div></div>
+    <div class="benefit"><i></i><div><b>轻</b><span>软件包 165 KB，不装数据库、不常驻后台</span></div></div>
+  </div>
+
+  <div class="forwho">
+    <div style="grid-column:1/-1;border-top:1px solid var(--line);padding-top:4mm;font-size:8pt;letter-spacing:.2em;color:var(--muted);margin-bottom:1mm">适合谁</div>
+    <div><b>期末复习的医学生</b><span>把复习站当教材，做题当自测，不懂就选中问。</span></div>
+    <div><b>想给课程配题库的人</b><span>已有网页资料，补一份题目就能做成存档。</span></div>
+    <div><b>带课的老师和学长</b><span>做好一门课发出去，别人导入就能用。</span></div>
+  </div>
+
+  <div class="end">
+    <div class="say">软件负责方法，<br>存档负责内容。</div>
+    <div class="link">
+      <b>github.com/makainuo/shauti-app</b><br>
+      fuyan/ · v0.1.2 · Windows<br>
+      <span style="font-size:7.6pt">存档格式与制作方法见 docs/存档格式与制作.md</span>
+    </div>
+  </div>
+  <div class="pno"><b>09</b> / 09</div>
+</section>
+
+</body>
+</html>
