@@ -551,6 +551,11 @@
     index() {
       const out = [];
       const seen = new Set();
+      // 正文标题大多没有 id：按 DOM 顺序补一个稳定 id，目录/搜索才能定位
+      let auto = 0;
+      doc.querySelectorAll('h2,h3,h4').forEach((h) => {
+        if (!h.id) h.id = 'fy-h-' + (++auto);
+      });
       // 章节
       const secEls = state.sections.length
         ? state.sections.map((s) => ({ id: s.id, title: s.title }))
@@ -562,7 +567,7 @@
         out.push({ kind: 'section', id: s.id, sectionId: s.id, title: s.title, text: (el.textContent || '').replace(/\s+/g, ' ').trim() });
       }
       // 小节标题
-      doc.querySelectorAll('h2[id],h3[id],h4[id]').forEach((h) => {
+      doc.querySelectorAll('h2,h3,h4').forEach((h) => {
         if (seen.has(h.id)) return;
         seen.add(h.id);
         let text = '';
@@ -574,13 +579,38 @@
           cur = cur.nextElementSibling;
           guard++;
         }
-        out.push({ kind: 'heading', id: h.id, sectionId: h.closest('section[id],article[id]') ? h.closest('section[id],article[id]').id : '', title: h.textContent.trim(), text: text.replace(/\s+/g, ' ').trim() });
+        out.push({ kind: 'heading', level: Number(h.tagName.slice(1)) || 2, id: h.id, sectionId: h.closest('section[id],article[id]') ? h.closest('section[id],article[id]').id : '', title: h.textContent.trim(), text: text.replace(/\s+/g, ' ').trim() });
       });
       return out;
     },
     scrollTop() { return window.scrollY; },
     scrollMax() { return Math.max(0, doc.documentElement.scrollHeight - window.innerHeight); },
     scrollToY(y) { window.scrollTo({ top: y || 0 }); },
+    // 滚到某段文字第一次出现的位置（可限定在某个 section 内），用于搜索结果精确跳转
+    scrollToText(query, sectionId) {
+      const raw = (query || '').trim();
+      if (!raw) return false;
+      const root = sectionId ? sectionEl(sectionId) : doc.body;
+      if (!root) return false;
+      const terms = [raw];
+      const first = raw.split(/\s+/)[0];
+      if (first && first !== raw) terms.push(first);
+      for (const q of terms) {
+        const walker = doc.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+        let n;
+        while ((n = walker.nextNode())) {
+          const i = n.nodeValue.indexOf(q);
+          if (i < 0) continue;
+          const r = doc.createRange();
+          r.setStart(n, i);
+          r.setEnd(n, i + q.length);
+          const rect = r.getBoundingClientRect();
+          window.scrollTo({ top: Math.max(0, rect.top + window.scrollY - window.innerHeight * 0.3) });
+          return true;
+        }
+      }
+      return false;
+    },
     currentSection() { return currentSection(); },
     selectText(query, noScroll) {
       // 简单实现：在正文里找第一处并选中

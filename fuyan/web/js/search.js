@@ -6,6 +6,7 @@ import { openNoteView } from './reader.js';
 let items = [];
 let results = [];
 let cur = 0;
+let lastQ = '';
 let builtFor = '';
 let timer = 0;
 
@@ -65,6 +66,7 @@ function score(it, ts) {
 }
 
 function search(q) {
+  lastQ = q.trim();
   const ts = terms(q.trim());
   if (!ts.length) {
     results = items.filter((x) => x.kind === 'section').slice(0, 12);
@@ -106,11 +108,18 @@ function pick(i) {
   closeSearch();
   if (it.kind === 'question') return showQuestion(it.q);
   if (it.kind === 'note') return openNoteView(it.id);
+  const sec = it.sectionId || it.id;
+  const q = lastQ;
   if (state.reader) {
     if (it.kind === 'heading' && it.id) state.reader.fy.api.gotoElement(it.id);
-    else state.reader.goto(it.sectionId || it.id);
+    else if (q && state.reader.fy.api.scrollToText) state.reader.fy.api.scrollToText(q, sec);
+    else state.reader.goto(sec);
+    if (state.reader.sectionTitle) state.reader.sectionTitle = it.title || state.reader.sectionTitle;
   } else {
-    App.go(`#/read/${state.archiveId}?s=${encodeURIComponent(it.sectionId || it.id)}`);
+    const params = new URLSearchParams({ s: sec });
+    if (it.kind === 'heading' && it.id) params.set('el', it.id);
+    if (q) params.set('q', q);
+    App.go(`#/read/${state.archiveId}?${params.toString()}`);
   }
 }
 

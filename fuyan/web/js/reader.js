@@ -91,6 +91,9 @@ export async function render(params, query) {
 
     fy.api.setMeta({ quizTotal: total, counts });
     fy.api.setSections(sections);
+    try {
+      buildSideToc(fy.api.index ? fy.api.index() : []);
+    } catch (_) {}
     fy.api.setProgress(state.progress);
     fy.api.setNotes(cleanNotes(state.notes));
     if (fy.api.setTheme) fy.api.setTheme(document.documentElement.dataset.theme || 'light');
@@ -104,6 +107,7 @@ export async function render(params, query) {
       onSectionChange(sid) {
         lastSection = sid;
         App.markSideActive(sid);
+        expandSideFor(sid);
         if (state.reader) state.reader.sectionTitle = titleOfSection(manifest, sid);
         state.progress.read = { ...(state.progress.read || {}), anchor: sid };
         saveProgressSoon();
@@ -129,9 +133,11 @@ export async function render(params, query) {
 
     // 记忆阅读位置：先瞬间跳到上次的位置，确认到位了再显示（避免闪一下封面）
     const wantSection = query.get('s');
+    const wantEl = query.get('el');
+    const wantQ = query.get('q');
     const wantNote = query.get('note');
     const read = state.progress.read || {};
-    const target = Math.max(0, read.scrollY || 0);
+    const target = wantEl || wantQ ? 0 : Math.max(0, read.scrollY || 0);
     let tries = 0;
     let shown = false;
     const show = () => {
@@ -141,10 +147,14 @@ export async function render(params, query) {
       if (veil) veil.remove();
       iframe.style.visibility = 'visible';
       iframe.style.opacity = '1';
+      if (wantEl) fy.api.gotoElement(wantEl);
+      else if (wantQ) fy.api.scrollToText(wantQ, wantSection || '');
+      if (wantSection) expandSideFor(wantSection);
+      syncRailFill();
     };
     const restore = () => {
       if (!iframe) return;
-      if (wantSection) {
+      if (wantSection && !wantEl && !wantQ) {
         fy.api.goto(wantSection);
         requestAnimationFrame(show);
         return;
@@ -186,6 +196,53 @@ export async function render(params, query) {
   });
 
   // Ctrl+K 之外的站内查找（顶栏搜索）由 search.js 使用 state.reader
+}
+
+/* ---------------------------------------------------------------- 侧栏目录 */
+function buildSideToc(items) {
+  const bySection = new Map();
+  for (const it of items || []) {
+    if (it.kind !== 'heading' || !it.sectionId) continue;
+    const lvl = Number(it.level) || 2;
+    if (lvl > 3) continue;
+    if (!bySection.has(it.sectionId)) bySection.set(it.sectionId, []);
+    bySection.get(it.sectionId).push(it);
+  }
+  document.querySelectorAll('#side .side-item').forEach((wrap) => {
+    const sid = wrap.dataset.for;
+    const a = wrap.querySelector('a[data-section]');
+    const sub = wrap.querySelector('.side-sub');
+    if (!a || !sub || !sid || !bySection.has(sid) || a.dataset.toc === '1') return;
+    const heads = bySection.get(sid);
+    sub.innerHTML = `<button class="side-sub-item head" data-el="">本章开头</button>` +
+      heads.map((h) => `<button class="side-sub-item l${Number(h.level) || 2}" data-el="${esc(h.id)}" title="${esc(h.title)}">${esc(h.title)}</button>`).join('');
+    sub.hidden = false;
+    a.dataset.toc = '1';
+    a.classList.add('has-sub');
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      wrap.classList.toggle('open');
+    });
+    sub.querySelectorAll('.side-sub-item').forEach((b) => {
+      b.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const el = b.dataset.el;
+        if (!el) {
+          if (state.reader) state.reader.goto(sid);
+        } else if (state.reader && state.reader.fy) {
+          state.reader.fy.api.gotoElement(el);
+        }
+        sub.querySelectorAll('.side-sub-item').forEach((x) => x.classList.toggle('on', x === b));
+      };
+    });
+  });
+}
+
+function expandSideFor(sid) {
+  if (!sid) return;
+  const wrap = document.querySelector(`#side .side-item[data-for="${String(sid).replace(/["\\]/g, '\\$&')}"]`);
+  if (wrap && wrap.querySelector('.side-sub')) wrap.classList.add('open');
 }
 
 function titleOfSection(manifest, sid) {

@@ -165,9 +165,12 @@ export function renderSide(manifest, activeSectionId) {
     .map((n) => {
       if (n.group) return `<div class="grp">${esc(n.group)}</div>`;
       const sid = n.sectionId || '';
-      return `<a href="#/read/${manifest.id}?s=${encodeURIComponent(sid || n.anchor)}" data-section="${esc(sid)}" class="${sid && sid === activeSectionId ? 'on' : ''}">
+      return `<div class="side-item" data-for="${esc(sid)}">
+        <a href="#/read/${manifest.id}?s=${encodeURIComponent(sid || n.anchor)}" data-section="${esc(sid)}" class="${sid && sid === activeSectionId ? 'on' : ''}">
         <span class="no">${esc(n.badge || '·')}</span><span class="t">${esc(n.title)}</span>
-        ${n.count ? `<span class="n">${n.count}</span>` : ''}</a>`;
+        ${n.count ? `<span class="n">${n.count}</span>` : ''}</a>
+        <div class="side-sub" hidden></div>
+      </div>`;
     })
     .join('');
   side.innerHTML = `${items}
@@ -182,6 +185,7 @@ export function renderSide(manifest, activeSectionId) {
   side.querySelectorAll('a[data-section]').forEach((a) => {
     a.addEventListener('click', (e) => {
       // 阅读器内：直接滚动，不重新加载 iframe
+      if (a.dataset.toc === '1') return; // 目录模式下由阅读器接管（点击展开/收起）
       if (state.reader && state.reader.goto) {
         e.preventDefault();
         state.reader.goto(a.dataset.section || '');

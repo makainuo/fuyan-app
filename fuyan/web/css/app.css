@@ -120,6 +120,17 @@ kbd{font-family:var(--mono);font-size:11px;padding:1px 5px;border:1px solid var(
 .side a .no{width:20px;text-align:center;font-size:12px;opacity:.75;font-family:var(--mono)}
 .side a.on .no{opacity:.95}
 .side a .n{margin-left:auto;font-size:11px;opacity:.65;font-family:var(--mono)}
+.side .side-item{display:block}
+.side a.has-sub::after{content:"▾";margin-left:auto;font-size:10px;opacity:.55;transition:transform .15s}
+.side .side-item.open a.has-sub::after{transform:rotate(180deg)}
+.side a.has-sub .n{margin-left:0}
+.side .side-sub{display:none;margin:2px 0 6px 30px;padding-left:8px;border-left:1px solid var(--line)}
+.side .side-item.open .side-sub{display:block}
+.side .side-sub-item{display:block;width:100%;text-align:left;background:none;border:0;color:var(--muted);font-size:12px;line-height:1.45;padding:4px 6px;border-radius:6px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.side .side-sub-item:hover{background:var(--accent-weak);color:var(--ink)}
+.side .side-sub-item.on{color:var(--accent);font-weight:600}
+.side .side-sub-item.l3{padding-left:16px;font-size:11.5px}
+.side .side-sub-item.head{color:var(--muted);font-size:11px;opacity:.8}
 .side .side-foot{margin-top:18px;padding:12px;border-top:1px dashed var(--line);color:var(--muted);font-size:11.5px;line-height:1.7}
 .side .side-actions{display:flex;flex-wrap:wrap;gap:6px;padding:10px 6px}
 .side .side-actions .btn{flex:1 1 auto;justify-content:center;font-size:12.5px;height:32px}

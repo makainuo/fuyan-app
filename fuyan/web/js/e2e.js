@@ -707,13 +707,64 @@ async function scenarioBookmark() {
   ok('书签: 测试数据已清理', count() === initial, `count=${count()} initial=${initial}`);
 }
 
+async function scenarioToc() {
+  await goto('#/read/digestive');
+  const w = await getReader();
+  await sleep(700);
+  const wrap = document.querySelector('#side .side-item[data-for="m1"]');
+  const subs = wrap ? wrap.querySelectorAll('.side-sub-item') : [];
+  ok('目录: 大章节下有子条目', subs.length >= 2, 'n=' + subs.length);
+  ok('目录: 默认收起', !!wrap && !wrap.classList.contains('open'));
+
+  document.querySelector('#side a[data-section="m1"]').click();
+  await sleep(300);
+  ok('目录: 点大章节展开', !!wrap && wrap.classList.contains('open') && wrap.querySelector('.side-sub').offsetHeight > 20, 'h=' + (wrap.querySelector('.side-sub') || {}).offsetHeight);
+
+  const before = w.__fuyan.api.scrollTop();
+  const sub = subs[1] || subs[0];
+  if (sub) sub.click();
+  await sleep(600);
+  const after = w.__fuyan.api.scrollTop();
+  ok('目录: 点小章节跳转', !!sub && Math.abs(after - before) > 40, `before=${Math.round(before)} after=${Math.round(after)}`);
+  ok('目录: 子条目高亮', !!sub && sub.classList.contains('on'));
+
+  // 搜索：先在阅读器里建立索引，再回首页搜索，验证链接带 el/q 且落在文段
+  document.querySelector('#btn-search').click();
+  await sleep(300);
+  const input = document.querySelector('#cmdk-input');
+  input.value = '隐窝脓肿';
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+  await sleep(500);
+  const hasResult = !!document.querySelector('.cmdk-item');
+  document.querySelector('#cmdk-close') && document.querySelector('#cmdk-close').click();
+  ok('搜索: 建立索引', hasResult);
+
+  await goto('#/');
+  await sleep(400);
+  document.querySelector('#btn-search').click();
+  await sleep(300);
+  const input2 = document.querySelector('#cmdk-input');
+  input2.value = '隐窝脓肿';
+  input2.dispatchEvent(new Event('input', { bubbles: true }));
+  await sleep(500);
+  const hit = document.querySelector('.cmdk-item');
+  ok('搜索: 首页有结果', !!hit);
+  if (hit) hit.click();
+  await sleep(1800);
+  ok('搜索: 跳转带精确锚点', /[?&](el|q)=/.test(location.hash), location.hash.slice(0, 140));
+  const w2 = await getReader();
+  await sleep(600);
+  const y = w2.__fuyan.api.scrollTop();
+  ok('搜索: 落在文段而非章首', y > 80, 'y=' + Math.round(y));
+}
+
 export async function run(name) {
   const map = {
     reader: scenarioReader, quiz: scenarioQuiz, search: scenarioSearch,
     settings: scenarioSettings, ai: scenarioAi, digestive: scenarioDigestive, done: scenarioDone,
     library: scenarioLibrary, longpress: scenarioLongpress, quark: scenarioQuark, aigate: scenarioAiGate,
     update: scenarioUpdate, nav: scenarioNav, aibubble: scenarioAiBubble, aichat: scenarioAiChat, scroll: scenarioScrollRestore,
-    flash: scenarioFlash, theme: scenarioTheme, kaodian: scenarioKaodian, subjective: scenarioSubjective, bookmark: scenarioBookmark,
+    flash: scenarioFlash, theme: scenarioTheme, kaodian: scenarioKaodian, subjective: scenarioSubjective, bookmark: scenarioBookmark, toc: scenarioToc,
   };
   const fn = map[name];
   let err = '';
