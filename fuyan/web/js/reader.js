@@ -51,10 +51,9 @@ export async function render(params, query) {
     <iframe id="reader-frame" title="${esc(manifest.title)}" src="/archive/${encodeURIComponent(id)}/content.html" style="opacity:0;visibility:hidden;transition:opacity .1s ease"></iframe>
     <div id="reader-veil" style="position:absolute;inset:0;background:var(--bg);z-index:2"></div>
     <div class="reader-loading" id="reader-loading">正在载入内容…</div>
-    <div class="reader-fab">
+    <div class="reader-actions">
       <button class="btn primary" id="reader-ai" title="问 DeepSeek（也可以先选中正文）">✦ 问 AI</button>
-      <button class="btn" id="reader-bookmark" title="在当前位置加书签（左键标记跳转 · 右键删除）">🔖</button>
-      <button class="btn" id="reader-top" title="回到顶部">↑</button>
+      <button class="btn" id="reader-bookmark" title="在当前位置加书签（左键标记跳转 · 右键删除）">🔖 书签</button>
     </div>
   </div>`;
 
@@ -62,9 +61,6 @@ export async function render(params, query) {
   bindDrawer();
   $('#reader-ai').onclick = () => openChat();
   $('#reader-bookmark').onclick = () => addBookmark();
-  $('#reader-top').onclick = () => {
-    if (state.reader && state.reader.fy) state.reader.fy.api.scrollToY(0);
-  };
 
   const setup = () => {
     const w = iframe.contentWindow;

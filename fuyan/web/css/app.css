@@ -194,8 +194,10 @@ label.field>small{display:block;font-size:11.5px;color:var(--muted);margin-top:4
 .reader iframe{flex:1;width:100%;border:0;background:#fff;display:block;height:100%}
 .reader.loading{background:var(--panel)}
 .reader-loading{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-size:13px;pointer-events:none}
-.reader-fab{position:fixed;right:22px;bottom:22px;z-index:40;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
-.reader-fab .btn{height:40px;box-shadow:var(--shadow)}
+.reader-actions{position:absolute;top:10px;right:16px;z-index:6;display:flex;gap:8px;align-items:center}
+.reader-actions .btn{height:32px;padding:0 12px;border-radius:999px;background:color-mix(in srgb, var(--panel) 92%, transparent);backdrop-filter:blur(6px);box-shadow:0 4px 14px rgba(0,0,0,.10);opacity:.94;font-size:12.5px}
+.reader-actions .btn:hover{opacity:1}
+.reader-actions .btn.primary{background:var(--accent);color:#fff;border-color:transparent}
 .reader-progress{position:absolute;left:0;right:0;top:0;height:2px;background:transparent;z-index:3}
 .reader-progress i{display:block;height:100%;width:0;background:var(--accent);transition:width .15s}
 .reader-rail{position:absolute;left:0;top:0;bottom:0;width:14px;z-index:5;pointer-events:none}
