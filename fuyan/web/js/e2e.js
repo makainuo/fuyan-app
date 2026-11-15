@@ -758,13 +758,41 @@ async function scenarioToc() {
   ok('搜索: 落在文段而非章首', y > 80, 'y=' + Math.round(y));
 }
 
+async function scenarioRoots() {
+  await goto('#/read/digestive');
+  const w = await getReader();
+  await sleep(600);
+  const doc = w.document;
+  const sec = doc.getElementById('roots');
+  const rows = sec ? sec.querySelectorAll('tbody tr').length : 0;
+  ok('词根: 板块存在', !!sec);
+  ok('词根: 精选条目 ≥ 80', rows >= 80, 'rows=' + rows);
+  ok('词根: 排在英文缩写之后', !!sec && doc.getElementById('abbreviations').nextElementSibling === sec);
+  ok('词根: 左栏入口存在', !!document.querySelector('#side a[data-section="roots"]'));
+
+  const wrap = document.querySelector('#side .side-item[data-for="roots"]');
+  const wasOpen = wrap.classList.contains('open');
+  document.querySelector('#side a[data-section="roots"]').click();
+  await sleep(300);
+  ok('词根: 左栏可展开/收起', wrap.classList.contains('open') !== wasOpen, 'wasOpen=' + wasOpen);
+  if (!wrap.classList.contains('open')) {
+    document.querySelector('#side a[data-section="roots"]').click();
+    await sleep(250);
+  }
+  const head = wrap.querySelector('.side-sub-item.head');
+  if (head) head.click();
+  await sleep(700);
+  const top = sec.getBoundingClientRect().top;
+  ok('词根: 点左栏可跳转到板块', Math.abs(top) < 500, 'top=' + Math.round(top));
+}
+
 export async function run(name) {
   const map = {
     reader: scenarioReader, quiz: scenarioQuiz, search: scenarioSearch,
     settings: scenarioSettings, ai: scenarioAi, digestive: scenarioDigestive, done: scenarioDone,
     library: scenarioLibrary, longpress: scenarioLongpress, quark: scenarioQuark, aigate: scenarioAiGate,
     update: scenarioUpdate, nav: scenarioNav, aibubble: scenarioAiBubble, aichat: scenarioAiChat, scroll: scenarioScrollRestore,
-    flash: scenarioFlash, theme: scenarioTheme, kaodian: scenarioKaodian, subjective: scenarioSubjective, bookmark: scenarioBookmark, toc: scenarioToc,
+    flash: scenarioFlash, theme: scenarioTheme, kaodian: scenarioKaodian, subjective: scenarioSubjective, bookmark: scenarioBookmark, toc: scenarioToc, roots: scenarioRoots,
   };
   const fn = map[name];
   let err = '';

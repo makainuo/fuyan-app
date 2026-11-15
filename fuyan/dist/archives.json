@@ -17,12 +17,12 @@
    "id": "digestive",
    "title": "消化系统",
    "subtitle": "临床推理复习站",
-   "version": "2.1.0",
+   "version": "2.2.0",
    "accent": "#bd5238",
    "notes": "46 名解 · 19 简答 · 5 病例 · 63 题",
-   "size": 225650,
-   "updatedAt": "2026-11-14",
-   "url": "https://cdn.jsdelivr.net/gh/makainuo/fuyan-app@master/fuyan/dist/digestive-2.1.0.zip"
+   "size": 117973,
+   "updatedAt": "2026-11-16",
+   "url": "https://cdn.jsdelivr.net/gh/makainuo/fuyan-app@master/fuyan/dist/digestive-2.2.0.zip"
   }
  ]
 }
