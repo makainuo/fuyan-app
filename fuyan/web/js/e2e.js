@@ -653,13 +653,67 @@ async function scenarioSubjective() {
   if (allBtn) allBtn.click();
 }
 
+async function scenarioBookmark() {
+  await goto('#/read/digestive');
+  const w = await getReader();
+  await sleep(600);
+  const fy = w.__fuyan;
+  const count = () => document.querySelectorAll('#rail-marks .rail-mark').length;
+  const initial = count();
+  ok('书签: 左侧进度栏存在', !!document.querySelector('#reader-rail'));
+
+  fy.api.scrollToY(1400);
+  await sleep(350);
+  const y0 = fy.api.scrollTop();
+  document.querySelector('#reader-bookmark').click();
+  await sleep(500);
+  ok('书签: 点按钮后出现标记', count() === initial + 1, `count=${count()}`);
+
+  const mark = document.querySelectorAll('#rail-marks .rail-mark')[initial];
+  if (mark) mark.click();
+  await sleep(350);
+  ok('书签: 左键跳回对应位置', Math.abs(fy.api.scrollTop() - y0) < 60, `y=${fy.api.scrollTop()} want~${y0}`);
+
+  fy.api.scrollToY(2600);
+  await sleep(350);
+  document.querySelector('#reader-bookmark').click();
+  await sleep(500);
+  const afterAdd = count();
+  await goto('#/read/digestive');
+  await getReader();
+  await sleep(800);
+  ok('书签: 重新进入后仍在', count() === afterAdd, `count=${count()} want=${afterAdd}`);
+
+  const first = document.querySelector('#rail-marks .rail-mark');
+  if (first) first.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+  await sleep(350);
+  const okBtn = document.querySelector('[data-act=ok]');
+  ok('书签: 右键弹出删除确认', !!okBtn);
+  if (okBtn) okBtn.click();
+  await sleep(600);
+  ok('书签: 删除后标记减少', count() === afterAdd - 1, `count=${count()}`);
+
+  // 清理测试加的书签，把进度栏恢复原样
+  let guard = 0;
+  while (count() > initial && guard++ < 10) {
+    const m = document.querySelector('#rail-marks .rail-mark');
+    if (!m) break;
+    m.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+    await sleep(250);
+    const b = document.querySelector('[data-act=ok]');
+    if (b) b.click();
+    await sleep(350);
+  }
+  ok('书签: 测试数据已清理', count() === initial, `count=${count()} initial=${initial}`);
+}
+
 export async function run(name) {
   const map = {
     reader: scenarioReader, quiz: scenarioQuiz, search: scenarioSearch,
     settings: scenarioSettings, ai: scenarioAi, digestive: scenarioDigestive, done: scenarioDone,
     library: scenarioLibrary, longpress: scenarioLongpress, quark: scenarioQuark, aigate: scenarioAiGate,
     update: scenarioUpdate, nav: scenarioNav, aibubble: scenarioAiBubble, aichat: scenarioAiChat, scroll: scenarioScrollRestore,
-    flash: scenarioFlash, theme: scenarioTheme, kaodian: scenarioKaodian, subjective: scenarioSubjective,
+    flash: scenarioFlash, theme: scenarioTheme, kaodian: scenarioKaodian, subjective: scenarioSubjective, bookmark: scenarioBookmark,
   };
   const fn = map[name];
   let err = '';

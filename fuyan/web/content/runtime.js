@@ -579,6 +579,7 @@
       return out;
     },
     scrollTop() { return window.scrollY; },
+    scrollMax() { return Math.max(0, doc.documentElement.scrollHeight - window.innerHeight); },
     scrollToY(y) { window.scrollTo({ top: y || 0 }); },
     currentSection() { return currentSection(); },
     selectText(query, noScroll) {

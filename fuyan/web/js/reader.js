@@ -47,11 +47,13 @@ export async function render(params, query) {
   main.className = 'main';
   main.innerHTML = `<div class="reader">
     <div class="reader-progress"><i id="read-bar"></i></div>
+    <div class="reader-rail" id="reader-rail" aria-hidden="true"><i id="rail-fill"></i><div class="rail-marks" id="rail-marks"></div></div>
     <iframe id="reader-frame" title="${esc(manifest.title)}" src="/archive/${encodeURIComponent(id)}/content.html" style="opacity:0;visibility:hidden;transition:opacity .1s ease"></iframe>
     <div id="reader-veil" style="position:absolute;inset:0;background:var(--bg);z-index:2"></div>
     <div class="reader-loading" id="reader-loading">正在载入内容…</div>
     <div class="reader-fab">
       <button class="btn primary" id="reader-ai" title="问 DeepSeek（也可以先选中正文）">✦ 问 AI</button>
+      <button class="btn" id="reader-bookmark" title="在当前位置加书签（左键标记跳转 · 右键删除）">🔖</button>
       <button class="btn" id="reader-top" title="回到顶部">↑</button>
     </div>
   </div>`;
@@ -59,6 +61,7 @@ export async function render(params, query) {
   iframe = $('#reader-frame');
   bindDrawer();
   $('#reader-ai').onclick = () => openChat();
+  $('#reader-bookmark').onclick = () => addBookmark();
   $('#reader-top').onclick = () => {
     if (state.reader && state.reader.fy) state.reader.fy.api.scrollToY(0);
   };
@@ -96,6 +99,8 @@ export async function render(params, query) {
     fy.api.setNotes(cleanNotes(state.notes));
     if (fy.api.setTheme) fy.api.setTheme(document.documentElement.dataset.theme || 'light');
     applyHomeProgress();
+    renderBookmarks();
+    syncRailFill();
 
     fy.host = {
       onSelection(info) { showBubble(info); },
@@ -110,6 +115,8 @@ export async function render(params, query) {
       onScroll({ pct, y }) {
         const bar = $('#read-bar');
         if (bar) bar.style.width = (pct * 100).toFixed(1) + '%';
+        const rail = $('#rail-fill');
+        if (rail) rail.style.height = (pct * 100).toFixed(1) + '%';
         state.progress.read = { ...(state.progress.read || {}), scrollY: y, anchor: lastSection };
         hideBubble();
         saveProgressSoon();
@@ -188,6 +195,84 @@ export async function render(params, query) {
 function titleOfSection(manifest, sid) {
   const n = (manifest.nav || []).find((x) => x.sectionId === sid);
   return n ? n.title : '';
+}
+
+/* ---------------------------------------------------------------- 书签 */
+function bookmarkList() {
+  const r = (state.progress && state.progress.read) || {};
+  return Array.isArray(r.bookmarks) ? r.bookmarks : [];
+}
+
+function saveBookmarks(list) {
+  state.progress.read = { ...(state.progress.read || {}), bookmarks: list };
+  flushProgress();
+}
+
+function syncRailFill() {
+  const rail = $('#rail-fill');
+  if (!rail) return;
+  const fy = state.reader && state.reader.fy;
+  if (!fy || !fy.api || !fy.api.scrollMax) return;
+  const max = fy.api.scrollMax();
+  const y = fy.api.scrollTop ? fy.api.scrollTop() : 0;
+  const pct = max > 0 ? Math.min(1, y / max) : 0;
+  rail.style.height = (pct * 100).toFixed(1) + '%';
+}
+
+function renderBookmarks() {
+  const wrap = $('#rail-marks');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  for (const bm of bookmarkList()) {
+    const pct = Math.max(0, Math.min(1, Number(bm.pct) || 0));
+    const el = document.createElement('button');
+    el.type = 'button';
+    el.className = 'rail-mark';
+    el.style.top = (pct * 100).toFixed(2) + '%';
+    el.title = `${bm.section || '阅读位置'} · ${Math.round(pct * 100)}%\n左键跳转 · 右键删除`;
+    el.onclick = (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      const fy = state.reader && state.reader.fy;
+      if (fy && fy.api && fy.api.scrollToY) fy.api.scrollToY(Math.max(0, Number(bm.y) || 0));
+      el.classList.add('active');
+      setTimeout(() => el.classList.remove('active'), 700);
+    };
+    el.oncontextmenu = async (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      const ok = await confirmDialog('删除这个书签？', `${bm.section || '阅读位置'} · ${Math.round(pct * 100)}%`, { okText: '删除' });
+      if (!ok) return;
+      saveBookmarks(bookmarkList().filter((x) => x.id !== bm.id));
+      renderBookmarks();
+      toast('已删除书签');
+    };
+    wrap.appendChild(el);
+  }
+}
+
+function addBookmark() {
+  const fy = state.reader && state.reader.fy;
+  if (!fy || !fy.api) return;
+  const y = fy.api.scrollTop ? fy.api.scrollTop() : 0;
+  const max = fy.api.scrollMax ? fy.api.scrollMax() : 1;
+  const pct = max > 0 ? Math.min(1, y / max) : 0;
+  const list = [...bookmarkList()];
+  if (list.some((b) => Math.abs((Number(b.y) || 0) - y) < 12)) {
+    toast('这个位置已经有书签了');
+    return;
+  }
+  const section = (state.reader && state.reader.sectionTitle) || titleOfSection(state.reader.manifest, lastSection) || '';
+  list.push({
+    id: 'bm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    y,
+    pct,
+    section,
+    at: new Date().toISOString(),
+  });
+  saveBookmarks(list);
+  renderBookmarks();
+  toast('已加书签，左键标记可跳转，右键可删除');
 }
 
 function applyHomeProgress() {
