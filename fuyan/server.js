@@ -1,5 +1,5 @@
 /**
- * 复研 MedReview · 本地服务
+ * 再捞我一下 · 本地服务
  * 零 npm 依赖：node server.js [--port 5279] [--no-open]
  */
 'use strict';
@@ -175,7 +175,7 @@ const api = {
     const kind = body.kind || 'zip';
     let picked = '';
     if (kind === 'folder') picked = await winps.pickFolder('选择存档文件夹（包含 manifest.json）');
-    else picked = await winps.pickFile('选择存档压缩包', '复研存档 (*.zip;*.fuyan)|*.zip;*.fuyan|所有文件 (*.*)|*.*');
+    else picked = await winps.pickFile('选择存档压缩包', '再捞我一下存档 (*.zip;*.fuyan)|*.zip;*.fuyan|所有文件 (*.*)|*.*');
     if (!picked) return send(res, 200, { ok: false, canceled: true, error: '已取消' });
     const r = await archiveLib.importArchive(picked, { mode: body.mode || 'replace' });
     send(res, 200, { ok: true, ...r, path: picked });
@@ -576,16 +576,23 @@ function findEdge() {
 function openWindow(url) {
   const edge = findEdge();
   if (edge) {
-    spawn(edge, [`--app=${url}`, '--window-size=1480,980', '--disable-features=Translate'], {
+    spawn(edge, [`--app=${url}`, '--start-maximized', '--disable-features=Translate'], {
       detached: true,
       stdio: 'ignore',
     }).unref();
+    const maximizeScript = path.join(store.APP_ROOT, 'tools', 'ps', 'maximize-app.ps1');
+    if (fs.existsSync(maximizeScript)) {
+      const powershell = path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
+      spawn(powershell, ['-NoProfile', '-NonInteractive', '-WindowStyle', 'Hidden', '-ExecutionPolicy', 'Bypass', '-File', maximizeScript, '-Title', '再捞我一下', '-Report', path.join(store.TMP_DIR, 'window-maximize.json')], {
+        detached: false, stdio: 'ignore', windowsHide: true,
+      });
+    }
   } else {
     spawn('cmd', ['/c', 'start', '', url], { detached: true, stdio: 'ignore' }).unref();
   }
 }
 
-/** 已经有一个复研在跑？返回它的地址 */
+/** 已经有一个再捞我一下在跑？返回它的地址 */
 function probeRunning(port) {
   return new Promise((resolve) => {
     const req = http.get(`http://127.0.0.1:${port}/api/health`, { timeout: 900 }, (res) => {
@@ -612,7 +619,7 @@ async function main() {
   // 单实例：已经在跑就直接开窗口，不再起第二个服务
   const running = await probeRunning(opts.port);
   if (running) {
-    console.log('复研已经在运行：' + running);
+    console.log('再捞我一下已经在运行：' + running);
     if (opts.open) openWindow(running);
     return;
   }
@@ -642,7 +649,7 @@ async function main() {
     version: VERSION.version,
   });
   console.log('');
-  console.log('  复研 MedReview v' + VERSION.version);
+  console.log('  再捞我一下 v' + VERSION.version);
   console.log('  ' + url);
   console.log('  数据目录：' + store.DATA_DIR);
   console.log('');

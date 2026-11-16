@@ -1,8 +1,8 @@
 {
-  "name": "fuyan-medreview",
-  "version": "0.1.0",
+  "name": "zailao-app",
+  "version": "0.1.3",
   "private": true,
-  "description": "复研 MedReview：外壳 + 存档式复习软件（阅读 / 刷题 / 批注 / DeepSeek / 夸克网盘）",
+  "description": "再捞我一下：医学课程阅读、刷题、批注与复习工具",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -12,5 +12,7 @@
     "e2e:all": "node tools/e2e.mjs reader && node tools/e2e.mjs quiz && node tools/e2e.mjs done && node tools/e2e.mjs digestive && node tools/e2e.mjs search && node tools/e2e.mjs library && node tools/e2e.mjs longpress",
     "build:archives": "python tools/build_archive.py all"
   },
-  "engines": { "node": ">=18" }
+  "engines": {
+    "node": ">=18"
+  }
 }

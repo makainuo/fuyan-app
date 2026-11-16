@@ -1,5 +1,5 @@
 /**
- * 复研 · Windows 能力桥
+ * 再捞我一下 · Windows 能力桥
  * 用系统自带 PowerShell 做：系统对话框、zip 压缩/解压。
  * （不引第三方依赖；这些能力在 Electron 中会被原生 API 替代）
  */
@@ -10,7 +10,7 @@ const path = require('path');
 const fs = require('fs');
 
 const PS_DIR = path.join(__dirname, '..', 'tools', 'ps');
-const PS = process.env.FUYAN_PS || 'powershell.exe';
+const PS = process.env.FUYAN_PS || path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
 
 function runPS(script, args, opts = {}) {
   const file = path.join(PS_DIR, script);

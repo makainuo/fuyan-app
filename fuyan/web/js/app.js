@@ -1,4 +1,4 @@
-/* 复研 · 应用入口：路由 + 全局状态装载 */
+/* 再捞我一下 · 应用入口：路由 + 全局状态装载 */
 import { state, $, esc, applyTheme, toggleTheme, toast, emit, openModal, closeModal } from './core.js';
 import { api } from './api.js';
 import * as library from './library.js';

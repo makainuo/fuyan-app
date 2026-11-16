@@ -1,4 +1,4 @@
-/* 复研 · 刷题引擎
+/* 再捞我一下 · 刷题引擎
    语义对齐好友的 shauti-app（Kotlin 版）：
    顺序/随机 · 快速/正常/背题 · 全部/未做/做错/已做/收藏 · 题号面板 · 会话断点续刷
    错题 = 曾经错过就一直在（做对不移除） · 重做做错保留记录只重置进度 · 完成页 */
@@ -102,7 +102,7 @@ export async function render(params) {
   destroyed = false;
 
   App.setCrumbs(`<a href="#/">存档库</a><span class="sep">/</span><a href="#/read/${esc(archiveId)}">${esc(manifest.title)}</a><span class="sep">/</span><b>刷题</b>`);
-  document.title = `刷题 · ${manifest.title} · 复研`;
+  document.title = `刷题 · ${manifest.title} · 再捞我一下`;
   App.renderSide(manifest, '');
   $('#side').hidden = true;
 

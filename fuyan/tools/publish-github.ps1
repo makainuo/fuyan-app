@@ -37,7 +37,7 @@ Write-Host "== 1/5 打包软件 ==" -ForegroundColor Cyan
 $stage = Join-Path $env:TEMP ("fuyan-pack-" + [guid]::NewGuid().ToString("N"))
 New-Item -ItemType Directory -Force -Path $stage | Out-Null
 $items = @("server.js", "lib", "web", "tools", "docs", "assets", "README.md", "package.json",
-           "version.json", "启动复研.bat", "启动复研.vbs", ".gitignore", ".gitattributes")
+           "version.json", "启动再捞我一下.bat", "启动再捞我一下.vbs", "启动复研.bat", "启动复研.vbs", ".gitignore", ".gitattributes")
 foreach ($i in $items) {
   $p = Join-Path $root $i
   if (Test-Path -LiteralPath $p) { Copy-Item -LiteralPath $p -Destination $stage -Recurse -Force }
@@ -45,7 +45,7 @@ foreach ($i in $items) {
 # 不带存档、不带用户数据、不带 node_modules；截图也不进安装包（省体积）
 Remove-Item (Join-Path $stage "data") -Recurse -Force -ErrorAction SilentlyContinue
 Remove-Item (Join-Path $stage "docs\screens") -Recurse -Force -ErrorAction SilentlyContinue
-$zip = Join-Path $dist ("fuyan-v$ver.zip")
+$zip = Join-Path $dist ("zailao-v$ver.zip")
 if (Test-Path $zip) { Remove-Item $zip -Force }
 Compress-Archive -Path (Join-Path $stage "*") -DestinationPath $zip -Force
 Remove-Item $stage -Recurse -Force
@@ -93,9 +93,9 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Write-Host "== 5/5 打 Release ==" -ForegroundColor Cyan
-$notes = "复研 MedReview $Tag · 软件包 + 在线存档清单"
+$notes = "再捞我一下 $Tag · 软件包 + 在线存档清单"
 $assets = @($zip, (Join-Path $dist "archives.json")) + (Get-ChildItem $dist -Filter "*.zip" | Where-Object { $_.FullName -ne $zip } | ForEach-Object { $_.FullName })
-& $gh release create $Tag --repo $Repo --title "复研 MedReview $Tag" --notes $notes @assets
+& $gh release create $Tag --repo $Repo --title "再捞我一下 $Tag" --notes $notes @assets
 if ($LASTEXITCODE -ne 0) { Write-Host "  Release 创建失败（可能已存在），不影响仓库内的文件" -ForegroundColor Yellow }
 
 Write-Host "`n完成。把下面两行填进「设置」：" -ForegroundColor Green

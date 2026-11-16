@@ -1,4 +1,4 @@
-/* 复研 · 接口封装（全部同源） */
+/* 再捞我一下 · 接口封装（全部同源） */
 
 async function req(method, url, body) {
   const opt = { method, headers: {} };

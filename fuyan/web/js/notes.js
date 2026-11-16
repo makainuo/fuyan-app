@@ -1,4 +1,4 @@
-/* 复研 · 批注管理（另一处删除入口） */
+/* 再捞我一下 · 批注管理（另一处删除入口） */
 import { state, $, esc, toast, openModal, closeModal, confirmDialog, fmtDate, timeAgo } from './core.js';
 import { api } from './api.js';
 import { App } from './app.js';
@@ -14,7 +14,7 @@ export async function render(params) {
   await App.loadUserData(id);
   App.setCrumbs(`<a href="#/">存档库</a><span class="sep">/</span><a href="#/read/${esc(id)}">${esc(manifest.title)}</a><span class="sep">/</span><b>批注</b>`);
   App.renderSide(manifest, '');
-  document.title = `批注 · ${manifest.title} · 复研`;
+  document.title = `批注 · ${manifest.title} · 再捞我一下`;
 
   const main = $('#main');
   main.className = 'main scroll';

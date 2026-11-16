@@ -1,4 +1,4 @@
-/* 复研 · 存档库 */
+/* 再捞我一下 · 存档库 */
 import { state, $, esc, fmtDate, toast, openModal, closeModal, confirmDialog, timeAgo } from './core.js';
 import { api } from './api.js';
 import { App } from './app.js';
@@ -39,6 +39,7 @@ function card(m) {
 }
 
 export async function render() {
+  document.title = '再捞我一下';
   const main = document.getElementById('main');
   main.className = 'main scroll';
   App.setCrumbs(`<b>存档库</b>`);

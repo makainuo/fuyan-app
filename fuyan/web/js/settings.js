@@ -1,4 +1,4 @@
-/* 复研 · 设置 */
+/* 再捞我一下 · 设置 */
 import { state, $, esc, toast, confirmDialog, fmtDate } from './core.js';
 import { api } from './api.js';
 import { App } from './app.js';
@@ -6,6 +6,7 @@ import { App } from './app.js';
 let cfg = null;
 
 export async function render() {
+  document.title = '再捞我一下';
   const r = await api.getConfig();
   cfg = r.config;
   const hasKey = r.hasKey;
@@ -103,7 +104,7 @@ export async function render() {
 
       <div class="card">
         <h3>关于</h3>
-        <p class="hint">复研 MedReview · 基于好友的 shauti-app 刷题框架 + 两份复习站的内容与视觉。</p>
+        <p class="hint">再捞我一下 · 基于好友的 shauti-app 刷题框架 + 两份复习站的内容与视觉。</p>
         <div class="kv"><b>版本</b><span>${esc((await api.health()).version || '')}</span></div>
         <div class="kv"><b>存档格式</b><span class="mono">fuyan/archive@1</span></div>
         <div class="kv"><b>技术</b><span>Node 本地服务 + 原生 JS 前端；无 npm 依赖</span></div>
@@ -256,10 +257,10 @@ function bindData() {
     toast('已导出到 data/exports', 'ok', 3200);
   };
   $('#app-quit').onclick = async () => {
-    const ok = await confirmDialog('退出复研？', '会关闭本地服务；重新使用请再双击「启动复研.bat」。', { okText: '退出' });
+    const ok = await confirmDialog('退出再捞我一下？', '会关闭本地服务；重新使用请再双击桌面上的「再捞我一下」。', { okText: '退出' });
     if (!ok) return;
     try { await api.quit(); } catch (_) {}
-    document.body.innerHTML = '<div style="display:grid;place-items:center;height:100vh;color:#6b7280;font-family:system-ui">复研已退出，可以关闭这个窗口了。</div>';
+    document.body.innerHTML = '<div style="display:grid;place-items:center;height:100vh;color:#6b7280;font-family:system-ui">再捞我一下已退出，可以关闭这个窗口了。</div>';
   };
 }
 
