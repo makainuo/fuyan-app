@@ -1,5 +1,5 @@
 /**
- * 复研 · 软件更新检查
+ * 再捞我一下 · 软件更新检查
  * 远端清单：version.json {version, update, notes, url}
  * 源：设置里的 manifestUrl，或按 update.repo 自动拼 GitHub raw + jsDelivr 双源
  */

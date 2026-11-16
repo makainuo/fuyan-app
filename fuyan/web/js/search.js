@@ -1,4 +1,4 @@
-/* 复研 · 全站搜索（Ctrl+K） */
+/* 再捞我一下 · 全站搜索（Ctrl+K） */
 import { state, $, $$, esc, markHits, openModal, closeModal } from './core.js';
 import { App } from './app.js';
 import { openNoteView } from './reader.js';

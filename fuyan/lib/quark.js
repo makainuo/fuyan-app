@@ -1,5 +1,5 @@
 /**
- * 复研 · 夸克网盘（经 WSL 里的官方 quark-drive CLI）
+ * 再捞我一下 · 夸克网盘（经 WSL 里的官方 quark-drive CLI）
  * 只做两件事：列出「dsh传输」里的存档包；把指定文件下载到本机临时目录。
  */
 'use strict';

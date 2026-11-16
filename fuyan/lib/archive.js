@@ -1,5 +1,5 @@
 /**
- * 复研 · 存档管理
+ * 再捞我一下 · 存档管理
  * 导入（文件夹 / zip）、导出 zip、删除、内容文档拼装
  */
 'use strict';
@@ -45,7 +45,7 @@ async function validateArchiveDir(dir) {
   const m = await store.readJSON(path.join(dir, 'manifest.json'), null);
   if (!m) throw new Error('manifest.json 解析失败');
   if (!m.schema || !String(m.schema).startsWith('fuyan/archive')) {
-    throw new Error('不是复研存档（schema 不匹配）');
+    throw new Error('不是再捞我一下存档（schema 不匹配）');
   }
   if (!fs.existsSync(path.join(dir, 'content.html'))) throw new Error('缺少 content.html');
   if (!m.id) throw new Error('manifest 缺少 id');

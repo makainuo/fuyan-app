@@ -1,33 +1,45 @@
-' Fuyan MedReview launcher (no console window)
-' Starts the local server hidden; the server opens the app window itself.
-' If an instance is already running, the server focuses it and exits.
-' NOTE: keep this file ASCII-only. WSH reads .vbs as ANSI, so non-ASCII
-' characters can break parsing on some systems.
+' Zai Lao Wo Yi Xia - silent launcher. Keep ASCII for Windows Script Host.
 Option Explicit
-Dim sh, fso, dir, nodeExe, rc
-
+Dim sh, fso, appDir, nodeExe, probe, rc, arg, checkOnly, serverArgs
 Set sh = CreateObject("WScript.Shell")
 Set fso = CreateObject("Scripting.FileSystemObject")
-
-dir = fso.GetParentFolderName(WScript.ScriptFullName)
-sh.CurrentDirectory = dir
-
-If Not fso.FileExists(dir & "\server.js") Then
-  MsgBox "server.js not found. Keep the launcher in the app folder.", 16, "Fuyan"
-  WScript.Quit 1
+appDir = fso.GetParentFolderName(WScript.ScriptFullName)
+sh.CurrentDirectory = appDir
+checkOnly = False
+serverArgs = ""
+For Each arg In WScript.Arguments
+  If LCase(arg) = "/check" Then
+    checkOnly = True
+  Else
+    serverArgs = serverArgs & " " & Chr(34) & Replace(arg, Chr(34), "") & Chr(34)
+  End If
+Next
+If Not fso.FileExists(appDir & "\server.js") Then
+  If Not checkOnly Then MsgBox "server.js is missing from the application folder.", 16, "Zai Lao Wo Yi Xia"
+  WScript.Quit 2
 End If
-
-' Runtime: PATH node -> bundled runtime\node. If neither, show a dialog that
-' offers to download a portable Node.js into the app folder (no admin needed).
-If Not fso.FileExists(dir & "\runtime\node\node.exe") Then
-  rc = sh.Run("powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File """ & dir & "\tools\ensure-node.ps1""", 0, True)
-  If rc <> 0 Then WScript.Quit rc
+nodeExe = appDir & "\runtime\node\node.exe"
+If Not fso.FileExists(nodeExe) Then
+  If sh.Run("cmd /c where node >nul 2>nul", 0, True) <> 0 Then
+    If checkOnly Then WScript.Quit 3
+    rc = sh.Run("powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File " & Chr(34) & appDir & "\tools\ensure-node.ps1" & Chr(34), 0, True)
+    If rc <> 0 Then WScript.Quit rc
+    If Not fso.FileExists(nodeExe) Then nodeExe = "node"
+  End If
+  If Not fso.FileExists(nodeExe) Then nodeExe = "node"
 End If
-
-If fso.FileExists(dir & "\runtime\node\node.exe") Then
-  nodeExe = dir & "\runtime\node\node.exe"
-Else
-  nodeExe = "node"
+probe = Chr(34) & nodeExe & Chr(34) & " -e " & Chr(34) & "process.exit(Number(process.versions.node.split('.')[0]) >= 18 ? 0 : 18)" & Chr(34)
+On Error Resume Next
+rc = sh.Run(probe, 0, True)
+If Err.Number <> 0 Then
+  On Error GoTo 0
+  If Not checkOnly Then MsgBox "The Node.js runtime could not be started.", 16, "Zai Lao Wo Yi Xia"
+  WScript.Quit 4
 End If
-
-sh.Run """" & nodeExe & """ server.js", 0, False
+On Error GoTo 0
+If rc <> 0 Then
+  If Not checkOnly Then MsgBox "Node.js 18 or newer is required.", 16, "Zai Lao Wo Yi Xia"
+  WScript.Quit 5
+End If
+If checkOnly Then WScript.Quit 0
+sh.Run Chr(34) & nodeExe & Chr(34) & " " & Chr(34) & appDir & "\server.js" & Chr(34) & serverArgs, 0, False

@@ -1,10 +1,9 @@
-# 复研 MedReview · Windows 测试版 v0.1
+# 再捞我一下 · Windows v0.1.3
 
 > 一个「外壳 + 存档」式的复习软件：软件负责阅读、检索、刷题、批注、问 AI；**存档**承载一门课的内容与题库。
 > 换课 = 换存档，不用改代码。
 
-- 位置：`D:\学习资料\_复习站App\fuyan`
-- 现成存档：**传染病学**（196 题）、**消化系统**（62 题）
+- 现成存档：**传染病学**（196 题）、**消化系统**（63 题）
 - 来源：好友的 [shauti-app](https://github.com/Cheakerion/shauti-app)（Kotlin/Compose 刷题 App）+ 两份复习站的内容与视觉
 
 ### 已发布
@@ -24,17 +23,17 @@
 
 ## 一、怎么跑起来
 
-**双击桌面图标「复研 MedReview」**（或开始菜单里的同名图标）。
+**双击桌面图标「再捞我一下」**（或开始菜单里的同名图标）。
 
 - 桌面 / 开始菜单快捷方式已在安装时创建；图标是 `assets\icon.ico`。
-- 快捷方式调用 `启动复研.vbs`：**不弹黑框**，直接起服务并打开应用窗口；
+- 快捷方式调用 `启动再捞我一下.vbs`：**不弹黑框**，直接起服务并打开应用窗口；
 - 已经在运行时，再双击只会把已有窗口调到前面（单实例），不会开第二个服务；
-- 想看日志/排错时，改用 `启动复研.bat`（带控制台）。
+- 想看日志/排错时，改用 `启动再捞我一下.bat`（带控制台）。
 
 它会：
 1. 启动本地服务（`127.0.0.1:5279`，端口被占会自动往后退）；
 2. 用 Edge 的「应用窗口」打开界面（没有地址栏/标签页，像一个独立软件）；
-3. 数据放在 `data\`；「设置 → 退出软件」可以关掉服务。
+3. 数据放在 `%APPDATA%\fuyan\`；「设置 → 退出软件」可以关掉服务。
 
 命令行也可以：
 
@@ -45,7 +44,7 @@ node server.js --port 5300     # 指定端口
 ```
 
 > 不需要 npm install：整个程序零第三方依赖，只用 Node 自带模块。
-> **运行环境**：需要 Node 18+。没有也能用——第一次双击 `启动复研` 会检测，缺的话弹窗问你要不要
+> **运行环境**：需要 Node 18+。没有也能用——第一次双击 `启动再捞我一下` 会检测，缺的话弹窗问你要不要
 > 自动下载便携版（约 30 MB，解压到程序目录 `runtime\node`，不装系统、不需要管理员权限）。
 > 也可以自己装 Node.js，或设 `FUYAN_NODE` 指向已有的 node.exe。
 
@@ -76,8 +75,8 @@ node server.js --port 5300     # 指定端口
 
 ```
 fuyan/
-├─ 启动复研.vbs            # 桌面图标调用它：无黑框启动
-├─ 启动复研.bat            # 排错用：带控制台
+├─ 启动再捞我一下.vbs            # 桌面图标调用它：无黑框启动
+├─ 启动再捞我一下.bat            # 排错用：带控制台
 ├─ assets/icon.ico         # 应用图标（tools/make_icon.py 生成）
 ├─ server.js               # HTTP 服务 + API
 ├─ lib/                    # store / archive / ai / quark / update / winps
@@ -163,3 +162,13 @@ node tools/e2e.mjs longpress   # 鼠标长按选中整句
 见 [`docs/TODO.md`](docs/TODO.md)：打包 exe、GitHub 自动更新、Markdown 题库导入、联网搜索、手机端、商用需要的账号与授权……都在里面。
 
 发布给别人用的完整流程见 [`docs/发布与分发.md`](docs/发布与分发.md)：GitHub Release 放软件与存档包、`archives.json` 清单、网盘只作作者通道。
+
+## 名称、图标与 Windows 启动
+
+- 名称为「再捞我一下」，Logo 是被漏勺托起的蓝紫小人。设计说明见 [品牌说明](docs/brand.md)。
+- 解压到固定目录后，可执行 `powershell -NoProfile -ExecutionPolicy Bypass -File tools/create-shortcuts.ps1` 创建桌面和开始菜单快捷方式；之后不要单独移动程序目录。
+- 优先使用程序目录的 `runtime/node/node.exe`，再查系统 Node；两者都没有时沿用便携 Node 下载引导。
+- 默认以保留标题栏的普通最大化窗口打开；Edge 已运行时也会补做最大化。
+- 任务栏使用独立应用标识 `ZaiLao.App`，从 12 尺寸 ICO 资源加载图标。
+- `%APPDATA%/fuyan`、`fuyan/archive@1` 和内部 API 保留，旧课程及学习数据继续兼容。
+- 仓库计划更名为 `zailao-app`；改名和更新地址迁移流程见 [迁移说明](docs/rename-repository.md)。

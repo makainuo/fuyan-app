@@ -1,4 +1,4 @@
-/* 复研 · 阅读器（同源 iframe + 内容运行时） */
+/* 再捞我一下 · 阅读器（同源 iframe + 内容运行时） */
 import { state, $, esc, toast, openModal, closeModal, confirmDialog, debounce, fmtDate } from './core.js';
 import { api } from './api.js';
 import { App } from './app.js';
@@ -33,7 +33,7 @@ export async function render(params, query) {
   await mergeDuplicateAiNotes().catch(() => {});
 
   App.setCrumbs(`<a href="#/">存档库</a><span class="sep">/</span><b>${esc(manifest.title)}</b><span class="sep">·</span><span>${esc(manifest.subtitle || '')}</span>`);
-  document.title = `${manifest.title} · 复研`;
+  document.title = `${manifest.title} · 再捞我一下`;
 
   if (manifest.accent) {
     document.documentElement.style.setProperty('--accent', manifest.accent);
