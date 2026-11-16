@@ -5,7 +5,7 @@
 
 - 日期：2026-11-16
 - 代码：`D:\学习资料\再捞我一下`
-- 参照：`D:\学习资料\_复习站App\upstream`（好友 Cheakerion/shauti-app，Kotlin/Compose 刷题 App）
+- 参照：`D:\学习资料\再捞我一下\_dev\upstream`（好友 Cheakerion/shauti-app，Kotlin/Compose 刷题 App）
 
 ---
 
