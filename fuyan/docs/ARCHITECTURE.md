@@ -1,10 +1,10 @@
-# 复研 MedReview · 架构设计（v0.1 实现版）
+# 再捞我一下 · 架构设计（v0.1.3 实现版）
 
 > 外壳 + 存档：软件提供阅读、检索、刷题、批注、AI；**存档**（Content + Bank）代表一门课。
 > 换课 = 换存档，不改代码。
 
-- 日期：2026-11-14
-- 代码：`D:\学习资料\_复习站App\fuyan`
+- 日期：2026-11-16
+- 代码：`D:\学习资料\再捞我一下`
 - 参照：`D:\学习资料\_复习站App\upstream`（好友 Cheakerion/shauti-app，Kotlin/Compose 刷题 App）
 
 ---
@@ -26,11 +26,12 @@
 ## 二、目录
 
 ```
-fuyan/
+再捞我一下/
 ├─ server.js                 # 入口：路由 + 静态 + SSE
 ├─ lib/
 │  ├─ store.js               # 配置 / 存档注册表 / 批注 / 进度（原子写）
 │  ├─ archive.js             # 导入(zip/文件夹) / 导出 / 内容文档拼装
+│  ├─ docconvert.js          # 文档 → 存档（docx / pptx / md，零依赖）
 │  ├─ ai.js                  # DeepSeek 代理（SSE）+ key 解析
 │  ├─ quark.js               # 夸克网盘（WSL + quark-drive CLI）
 │  ├─ update.js              # 软件更新检查
@@ -39,13 +40,19 @@ fuyan/
 │  ├─ index.html  css/app.css
 │  ├─ js/{app,core,api,library,reader,quiz,notes,search,settings,ai,e2e}.js
 │  └─ content/{runtime.js,overlay.css}   # 注入存档文档
-├─ tools/{build_archive.py, e2e.mjs, ensure-node.ps1, ps/*.ps1}
+├─ tools/{build_archive.py, doc2archive.py, e2e.mjs, ensure-node.ps1, ps/*.ps1}
+├─ docs/{ARCHITECTURE,brand,rename-repository,发布与分发,存档格式与制作,TODO}.md
+├─ assets/  web/brand/        # 图标与 SVG 源
+├─ data/                     # 本地构建/导出缓存（用户数据在 %APPDATA%\fuyan）
+└─ version.json  package.json
 ```
 
-启动链路：`启动复研.vbs` → `tools/ensure-node.ps1`（PATH 里找 Node 18+，没有就看 `runtime\node`，
+启动链路：`启动再捞我一下.vbs` → `tools/ensure-node.ps1`（PATH 里找 Node 18+，没有就看 `runtime\node`，
 再没有就弹窗询问是否下载便携版）→ 用找到的 node 起 `server.js`，由 server 打开应用窗口。
-└─ docs/
-```
+旧的 `启动复研.*` 保留作兼容入口，行为相同。
+
+**存档转化**：首页「存档转化」→ `POST /api/convert/pick` → `lib/docconvert.js` 解析 docx/pptx/md →
+写到 `%APPDATA%\fuyan\converted\<id>\` 与 `<id>.zip` → 自动导入存档库。PDF 需先另存为 docx。
 
 用户数据**不在程序目录**，默认 `%APPDATA%\fuyan`（可用 `FUYAN_DATA` 覆盖）：
 `config.json`、`archives/<id>/`、`user/<id>/{annotations,ai-threads,progress}.json`。

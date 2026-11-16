@@ -1,4 +1,4 @@
-﻿# 复研 · 运行环境检查 / 便携版 Node 下载
+﻿# 再捞我一下 · 运行环境检查 / 便携版 Node 下载
 #
 # 逻辑：PATH 里找 node → 程序目录 runtime\node → 都没有就询问用户是否下载便携版
 # 退出码：0 = 可用；2 = 没找到（CheckOnly）；3 = 用户取消；1 = 出错
@@ -56,13 +56,13 @@ function Show-MissingDialog {
 否：打开 Node.js 官网自己装
 取消：先不打开
 "@
-  return [System.Windows.Forms.MessageBox]::Show($text, '复研 · 缺少运行环境', 'YesNoCancel', 'Question')
+  return [System.Windows.Forms.MessageBox]::Show($text, '再捞我一下 · 缺少运行环境', 'YesNoCancel', 'Question')
 }
 
 function Download-Node([string]$url, [string]$dst) {
   Add-Type -AssemblyName System.Windows.Forms
   $form = New-Object System.Windows.Forms.Form
-  $form.Text = '复研 · 正在准备运行环境'
+  $form.Text = '再捞我一下 · 正在准备运行环境'
   $form.Width = 470
   $form.Height = 140
   $form.StartPosition = 'CenterScreen'
@@ -165,8 +165,8 @@ foreach ($url in $MIRRORS) {
 if (-not $ok) {
   Add-Type -AssemblyName System.Windows.Forms
   [System.Windows.Forms.MessageBox]::Show(
-    "没能自动装好运行环境。`n`n$lastErr`n`n可以手动安装 Node.js 18+ 后再打开复研。",
-    '复研 · 准备失败', 'OK', 'Error') | Out-Null
+    "没能自动装好运行环境。`n`n$lastErr`n`n可以手动安装 Node.js 18+ 后再打开再捞我一下。",
+    '再捞我一下 · 准备失败', 'OK', 'Error') | Out-Null
   exit 1
 }
 

@@ -29,6 +29,7 @@ export const api = {
   pickImport: (kind) => req('POST', '/api/archives/pick', { kind }),
   importPath: (p) => req('POST', '/api/archives/import', { path: p }),
   importUrl: (url) => req('POST', '/api/archives/import-url', { url }),
+  convertPick: () => req('POST', '/api/convert/pick', {}),
   catalog: () => req('GET', '/api/archives/catalog'),
   publishArchive: (id) => req('POST', `/api/archives/${encodeURIComponent(id)}/publish`),
   exportArchive: (id) => req('POST', `/api/archives/${encodeURIComponent(id)}/export`),

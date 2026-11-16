@@ -16,6 +16,7 @@ const ai = require('./lib/ai');
 const quark = require('./lib/quark');
 const updateLib = require('./lib/update');
 const winps = require('./lib/winps');
+const docconvert = require('./lib/docconvert');
 
 const WEB_DIR = path.join(store.APP_ROOT, 'web');
 const VERSION = require('./version.json');
@@ -179,6 +180,20 @@ const api = {
     if (!picked) return send(res, 200, { ok: false, canceled: true, error: '已取消' });
     const r = await archiveLib.importArchive(picked, { mode: body.mode || 'replace' });
     send(res, 200, { ok: true, ...r, path: picked });
+  },
+
+  async convertPick(req, res) {
+    const picked = await winps.pickFile('选择要转换的文档', 'Word / PPT / Markdown (*.docx;*.pptx;*.md;*.markdown;*.txt)|*.docx;*.pptx;*.md;*.markdown;*.txt|所有文件 (*.*)|*.*');
+    if (!picked) return send(res, 200, { ok: false, canceled: true });
+    const r = await docconvert.convertAndImport(picked);
+    send(res, 200, r);
+  },
+
+  async convertPath(req, res) {
+    const body = await readBody(req);
+    if (!body.path) return fail(res, 400, '缺少 path');
+    const r = await docconvert.convertAndImport(body.path, { title: body.title, id: body.id });
+    send(res, 200, r);
   },
 
   async exportArchive(req, res, ctx) {
@@ -447,6 +462,8 @@ const ROUTES = [
   ['POST', /^\/api\/archives\/import$/, api.importArchive],
   ['POST', /^\/api\/archives\/import-url$/, api.importUrl],
   ['POST', /^\/api\/archives\/pick$/, api.pickAndImport],
+  ['POST', /^\/api\/convert\/pick$/, api.convertPick],
+  ['POST', /^\/api\/convert$/, api.convertPath],
   ['POST', /^\/api\/archives\/([\w.-]+)\/publish$/, api.publishArchive],
   ['GET', /^\/api\/archives\/([\w.-]+)$/, api.getArchive],
   ['DELETE', /^\/api\/archives\/([\w.-]+)$/, api.deleteArchive],

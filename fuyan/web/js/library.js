@@ -56,6 +56,18 @@ export async function render() {
       <span class="spacer"></span>
       <span class="muted small">共 ${archives.length} 个存档</span>
     </div>
+    <div class="convert-card" id="convert-card">
+      <div class="convert-ic" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M4 20h16"/>
+        </svg>
+      </div>
+      <div class="convert-txt">
+        <b>存档转化</b>
+        <span>Word / PPT / Markdown → 存档，自动放进存档库</span>
+      </div>
+      <button class="btn primary" id="btn-convert">选择文件</button>
+    </div>
     <div id="online-catalog"></div>
     ${archives.length ? `<div class="lib-grid">${archives.map(card).join('')}</div>`
       : `<div class="lib-empty"><div class="big">还没有存档</div>
@@ -67,6 +79,26 @@ export async function render() {
   main.querySelectorAll('[data-import]').forEach((b) => {
     b.onclick = () => doImport(b.dataset.import, b);
   });
+  const btnConvert = $('#btn-convert');
+  if (btnConvert) {
+    btnConvert.onclick = async () => {
+      const old = btnConvert.textContent;
+      btnConvert.disabled = true;
+      btnConvert.textContent = '转化中…';
+      try {
+        const r = await api.convertPick();
+        if (r.canceled) return;
+        toast(`已生成「${r.title}」：${r.sections} 节${r.images ? ' · ' + r.images + ' 张图' : ''}`, 'ok', 3000);
+        await App.reloadArchives();
+        App.go('#/read/' + encodeURIComponent(r.id));
+      } catch (e) {
+        toast(e.message || '转化失败', 'bad', 6000);
+      } finally {
+        btnConvert.disabled = false;
+        btnConvert.textContent = old;
+      }
+    };
+  }
   bindCards(main);
 
   // 后台检查网盘来源的存档有没有更新（不阻塞界面）

@@ -1,6 +1,6 @@
 {
-  "version": "0.1.3",
-  "update": 4,
-  "notes": "更名为再捞我一下；新增漏勺 SVG 品牌图标；修复便携 Node 启动、默认最大化与高清任务栏图标",
-  "url": "https://cdn.jsdelivr.net/gh/makainuo/zailao-app@master/fuyan/dist/zailao-v0.1.3.zip"
+  "version": "0.1.4",
+  "update": 5,
+  "notes": "首页新增「存档转化」（Word/PPT/Markdown 自动导入）；整理应用路径与旧品牌残留；修复阅读器批注自测",
+  "url": "https://cdn.jsdelivr.net/gh/makainuo/zailao-app@master/fuyan/dist/zailao-v0.1.4.zip"
 }

@@ -32,7 +32,7 @@ function cmpVersion(a, b) {
 function fetchJSON(url, timeout = 8000) {
   return new Promise((resolve, reject) => {
     const mod = url.startsWith('https') ? require('https') : require('http');
-    const req = mod.get(url, { timeout, headers: { 'User-Agent': 'fuyan-app' } }, (res) => {
+    const req = mod.get(url, { timeout, headers: { 'User-Agent': 'zailao-app' } }, (res) => {
       if (res.statusCode !== 200) {
         res.resume();
         return reject(new Error('HTTP ' + res.statusCode));

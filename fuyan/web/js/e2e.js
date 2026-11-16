@@ -41,6 +41,8 @@ async function getReader() {
 }
 
 async function scenarioReader() {
+  const beforeNotes = (await api.getNotes('infectious')).notes.items || [];
+  const base = beforeNotes.length;
   await goto('#/read/infectious');
   const w = await getReader();
   const fy = w.__fuyan;
@@ -82,14 +84,14 @@ async function scenarioReader() {
   await sleep(600);
 
   const notes = state.notes || [];
-  ok('批注: 已保存到状态', notes.length === 1, 'notes=' + notes.length);
+  ok('批注: 已保存到状态', notes.length === base + 1, `notes=${notes.length} base=${base}`);
   const hl = w.CSS && w.CSS.highlights ? w.CSS.highlights.get('fy-note') : null;
   const hlSize = hl ? hl.size : -1;
-  ok('批注: 正文高亮已渲染', hlSize === 1, 'highlightRanges=' + hlSize);
+  ok('批注: 正文高亮已渲染', hlSize >= 1, `highlightRanges=${hlSize} base=${base}`);
 
   // 服务端持久化
   const saved = await api.getNotes('infectious');
-  ok('批注: 服务端已落盘', (saved.notes.items || []).length === 1, 'items=' + (saved.notes.items || []).length);
+  ok('批注: 服务端已落盘', (saved.notes.items || []).length === base + 1, `items=${(saved.notes.items || []).length} base=${base}`);
 
   // 离开再回来：批注应仍在原位
   await goto('#/');
@@ -98,15 +100,16 @@ async function scenarioReader() {
   const w2 = await getReader();
   await sleep(500);
   const hl2 = w2.CSS && w2.CSS.highlights ? w2.CSS.highlights.get('fy-note') : null;
-  ok('批注: 重新打开后仍在原位置', hl2 && hl2.size === 1, 'ranges=' + (hl2 ? hl2.size : -1));
+  ok('批注: 重新打开后仍在原位置', hl2 && hl2.size >= 1, 'ranges=' + (hl2 ? hl2.size : -1));
 
   // 批注管理页
   await goto('#/notes/infectious');
   await waitFor(() => $('.note-item'));
-  ok('批注管理: 列表可见', $$('.note-item').length === 1, 'items=' + $$('.note-item').length);
+  ok('批注管理: 列表可见', $$('.note-item').length === base + 1, `items=${$$('.note-item').length} base=${base}`);
 
-  // 删除（管理页入口）
-  const del = $('.note-item [data-act=del]');
+  // 只删除本轮创建的「稽留热」批注，不碰用户已有批注
+  const created = [...$$('.note-item')].find((el) => (el.textContent || '').includes('稽留热'));
+  const del = created ? created.querySelector('[data-act=del]') : null;
   if (del) {
     del.click();
     await sleep(250);
@@ -115,7 +118,7 @@ async function scenarioReader() {
     await sleep(700);
   }
   const after = await api.getNotes('infectious');
-  ok('批注: 管理页可删除', (after.notes.items || []).length === 0, 'items=' + (after.notes.items || []).length);
+  ok('批注: 管理页可删除', (after.notes.items || []).length === base, `items=${(after.notes.items || []).length} base=${base}`);
 }
 
 async function scenarioQuiz() {

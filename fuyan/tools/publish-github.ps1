@@ -1,4 +1,4 @@
-﻿# 复研 · 发布到 GitHub（一条命令）
+﻿# 再捞我一下 · 发布到 GitHub（一条命令）
 #
 #   # 先登录（只需要一次）：
 #   gh auth login --hostname github.com --git-protocol https
@@ -37,7 +37,7 @@ Write-Host "== 1/5 打包软件 ==" -ForegroundColor Cyan
 $stage = Join-Path $env:TEMP ("fuyan-pack-" + [guid]::NewGuid().ToString("N"))
 New-Item -ItemType Directory -Force -Path $stage | Out-Null
 $items = @("server.js", "lib", "web", "tools", "docs", "assets", "README.md", "package.json",
-           "version.json", "启动再捞我一下.bat", "启动再捞我一下.vbs", "启动复研.bat", "启动复研.vbs", ".gitignore", ".gitattributes")
+           "version.json", "启动再捞我一下.bat", "启动再捞我一下.vbs", "启动再捞我一下.bat", "启动再捞我一下.vbs", ".gitignore", ".gitattributes")
 foreach ($i in $items) {
   $p = Join-Path $root $i
   if (Test-Path -LiteralPath $p) { Copy-Item -LiteralPath $p -Destination $stage -Recurse -Force }
@@ -45,6 +45,7 @@ foreach ($i in $items) {
 # 不带存档、不带用户数据、不带 node_modules；截图也不进安装包（省体积）
 Remove-Item (Join-Path $stage "data") -Recurse -Force -ErrorAction SilentlyContinue
 Remove-Item (Join-Path $stage "docs\screens") -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item (Join-Path $stage "docs\legacy") -Recurse -Force -ErrorAction SilentlyContinue
 $zip = Join-Path $dist ("zailao-v$ver.zip")
 if (Test-Path $zip) { Remove-Item $zip -Force }
 Compress-Archive -Path (Join-Path $stage "*") -DestinationPath $zip -Force

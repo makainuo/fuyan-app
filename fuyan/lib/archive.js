@@ -132,7 +132,7 @@ async function downloadToFile(url, { maxBytes = 300 * 1024 * 1024, timeout = 120
   const fetchOne = (u, redirects = 0) => new Promise((resolve, reject) => {
     if (redirects > 5) return reject(new Error('重定向次数过多'));
     const client = u.startsWith('https') ? https : http;
-    const req = client.get(u, { timeout, headers: { 'User-Agent': 'fuyan-app', Accept: '*/*' } }, (res) => {
+    const req = client.get(u, { timeout, headers: { 'User-Agent': 'zailao-app', Accept: '*/*' } }, (res) => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
         res.resume();
         const next = new URL(res.headers.location, u).toString();
