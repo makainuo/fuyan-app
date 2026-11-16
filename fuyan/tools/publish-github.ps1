@@ -45,7 +45,6 @@ foreach ($i in $items) {
 # 不带存档、不带用户数据、不带 node_modules；截图也不进安装包（省体积）
 Remove-Item (Join-Path $stage "data") -Recurse -Force -ErrorAction SilentlyContinue
 Remove-Item (Join-Path $stage "docs\screens") -Recurse -Force -ErrorAction SilentlyContinue
-Remove-Item (Join-Path $stage "docs\legacy") -Recurse -Force -ErrorAction SilentlyContinue
 $zip = Join-Path $dist ("zailao-v$ver.zip")
 if (Test-Path $zip) { Remove-Item $zip -Force }
 Compress-Archive -Path (Join-Path $stage "*") -DestinationPath $zip -Force

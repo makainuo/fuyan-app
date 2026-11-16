@@ -49,7 +49,6 @@
 
 启动链路：`启动再捞我一下.vbs` → `tools/ensure-node.ps1`（PATH 里找 Node 18+，没有就看 `runtime\node`，
 再没有就弹窗询问是否下载便携版）→ 用找到的 node 起 `server.js`，由 server 打开应用窗口。
-旧的 `启动复研.*` 保留作兼容入口，行为相同。
 
 **存档转化**：首页「存档转化」→ `POST /api/convert/pick` → `lib/docconvert.js` 解析 docx/pptx/md →
 写到 `%APPDATA%\fuyan\converted\<id>\` 与 `<id>.zip` → 自动导入存档库。PDF 需先另存为 docx。

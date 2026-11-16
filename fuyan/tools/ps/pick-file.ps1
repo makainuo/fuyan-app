@@ -15,5 +15,8 @@ $owner.Show()
 $result = $dialog.ShowDialog($owner)
 $owner.Close()
 if ($result -eq [System.Windows.Forms.DialogResult]::OK) {
-  [Console]::Out.Write($dialog.FileName)
+  $bytes = [System.Text.Encoding]::UTF8.GetBytes($dialog.FileName)
+  $stdout = [Console]::OpenStandardOutput()
+  $stdout.Write($bytes, 0, $bytes.Length)
+  $stdout.Flush()
 }

@@ -1,6 +1,6 @@
 {
-  "version": "0.1.4",
-  "update": 5,
-  "notes": "首页新增「存档转化」（Word/PPT/Markdown 自动导入）；整理应用路径与旧品牌残留；修复阅读器批注自测",
-  "url": "https://cdn.jsdelivr.net/gh/makainuo/zailao-app@master/fuyan/dist/zailao-v0.1.4.zip"
+  "version": "0.1.5",
+  "update": 6,
+  "notes": "修复中文路径文件选择后提示找不到文件（对话框输出编码）；清理旧品牌/旧入口；存档转化与导入存档包实测通过",
+  "url": "https://cdn.jsdelivr.net/gh/makainuo/zailao-app@master/fuyan/dist/zailao-v0.1.5.zip"
 }
