@@ -301,6 +301,7 @@ async function scenarioLibrary() {
   await goto('#/');
   await waitFor(() => $('.arc'), 8000);
   ok('存档库: 卡片渲染', $$('.arc').length >= 2, 'cards=' + $$('.arc').length);
+  ok('存档转化: 首页入口存在', !!$('#btn-convert') && /存档转化/.test(($('#convert-card') || {}).textContent || ''));
   const quarkOnes = (state.archives || []).filter((a) => (a.source || {}).kind === 'quark');
   if (!quarkOnes.length) {
     ok('网盘: 当前没有网盘来源存档，跳过更新检查', true, 'local-only');
@@ -789,13 +790,28 @@ async function scenarioRoots() {
   ok('词根: 点左栏可跳转到板块', Math.abs(top) < 500, 'top=' + Math.round(top));
 }
 
+async function scenarioConvert() {
+  const src = 'D:/学习资料/再捞我一下存档制作/示例/示例笔记.md';
+  const r = await fetch('/api/convert', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path: src, id: 'e2e-convert', title: 'E2E 转化' }),
+  }).then((x) => x.json());
+  ok('转化: API 生成成功', r.ok && r.sections > 0, `sections=${r.sections} images=${r.images}`);
+  ok('转化: 自动导入存档库', r.imported && r.manifest && r.manifest.id === 'e2e-convert');
+  const list = await fetch('/api/archives').then((x) => x.json());
+  const ids = (list.items || list.archives || []).map((a) => a.id);
+  ok('转化: 出现在存档列表', ids.includes('e2e-convert'));
+  await fetch('/api/archives/e2e-convert', { method: 'DELETE' });
+}
+
 export async function run(name) {
   const map = {
     reader: scenarioReader, quiz: scenarioQuiz, search: scenarioSearch,
     settings: scenarioSettings, ai: scenarioAi, digestive: scenarioDigestive, done: scenarioDone,
     library: scenarioLibrary, longpress: scenarioLongpress, quark: scenarioQuark, aigate: scenarioAiGate,
     update: scenarioUpdate, nav: scenarioNav, aibubble: scenarioAiBubble, aichat: scenarioAiChat, scroll: scenarioScrollRestore,
-    flash: scenarioFlash, theme: scenarioTheme, kaodian: scenarioKaodian, subjective: scenarioSubjective, bookmark: scenarioBookmark, toc: scenarioToc, roots: scenarioRoots,
+    flash: scenarioFlash, theme: scenarioTheme, kaodian: scenarioKaodian, subjective: scenarioSubjective, bookmark: scenarioBookmark, toc: scenarioToc, roots: scenarioRoots, convert: scenarioConvert,
   };
   const fn = map[name];
   let err = '';
