@@ -10,13 +10,13 @@
 
 | 内容 | 地址 |
 |---|---|
-| 主仓库（优先更新） | https://github.com/makainuo/fuyan-app/tree/master/fuyan |
+| 主仓库（优先更新） | https://github.com/makainuo/zailao-app/tree/master/fuyan |
 | 上游（同步 / PR） | https://github.com/Cheakerion/shauti-app/tree/master/fuyan |
-| 软件下载 | https://github.com/makainuo/fuyan-app/releases/tag/v0.1.2 |
-| 在线存档清单 | `https://cdn.jsdelivr.net/gh/makainuo/fuyan-app@master/fuyan/dist/archives.json` |
-| 更新源 | 仓库 `makainuo/fuyan-app` · 分支 `master` · 路径 `fuyan/` |
+| 软件下载 | https://github.com/makainuo/zailao-app/releases/tag/v0.1.3 |
+| 在线存档清单 | `https://cdn.jsdelivr.net/gh/makainuo/zailao-app@master/fuyan/dist/archives.json` |
+| 更新源 | 仓库 `makainuo/zailao-app` · 分支 `master` · 路径 `fuyan/` |
 
-> 约定：改动先推 `makainuo/fuyan-app`（软件更新、在线存档、存档包下载都走这里）；
+> 约定：改动先推 `makainuo/zailao-app`（软件更新、在线存档、存档包下载都走这里）；
 > 需要给上游时再同步到 `Cheakerion/shauti-app`，不再走 fork。
 
 ---

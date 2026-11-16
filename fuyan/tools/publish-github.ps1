@@ -10,7 +10,7 @@
 #   .\tools\publish-github.ps1 -Repo makainuo/fuyan -Tag v0.1.0
 #
 param(
-  [string]$Repo = "makainuo/fuyan-app",
+  [string]$Repo = "makainuo/zailao-app",
   [string]$Tag = "",
   [switch]$DryRun,
   [switch]$Private
