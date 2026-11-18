@@ -1,8 +1,8 @@
 {
-  "version": "0.1.9",
-  "update": 10,
-  "notes": "逐课目录 + 软件内更新；自动识别 Word/PPT/Markdown/文本/HTML 题库；修复 Markdown 误判、清理旧入口并完善打包校验",
-  "url": "https://github.com/makainuo/zailao-app/releases/download/v0.1.9/zailao-v0.1.9.zip",
+  "version": "0.2.0",
+  "update": 11,
+  "notes": "B 主题 UI 重构：冷中性配色、首页侧栏与继续学习、本地/在线存档两列与折叠卡片、按学科配色、暗色按钮修复；旧存档统一 B 渲染层",
+  "url": "https://github.com/makainuo/zailao-app/releases/download/v0.2.0/zailao-v0.2.0.zip",
   "capabilities": [
     "lesson-navigation",
     "in-app-updates"

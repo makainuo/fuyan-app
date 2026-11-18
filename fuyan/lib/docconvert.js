@@ -528,6 +528,13 @@ function safeId(title) {
   return 'doc-' + new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14) + '-' + Math.random().toString(36).slice(2, 6);
 }
 
+const CONVERT_ACCENTS = ['#8C3B2E', '#0F766E', '#4F5BD5', '#A86A1C', '#6D4C9F', '#2F6F4E', '#B44237', '#315D7A'];
+function accentFor(id) {
+  let h = 0;
+  for (const ch of String(id || '')) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return CONVERT_ACCENTS[h % CONVERT_ACCENTS.length];
+}
+
 async function convertAndImport(input, opts = {}) {
   const ext = path.extname(input).toLowerCase();
   if (!fs.existsSync(input)) throw new Error('找不到文件：' + input);
@@ -592,7 +599,7 @@ async function convertAndImport(input, opts = {}) {
     subtitle: review ? '复习展板' : '由文档转换',
     version: '1.0.0',
     builtAt: new Date().toISOString(),
-    accent: '#b4552d',
+    accent: accentFor(id),
     nav,
     quiz: { total: questions.length, topics: [...new Set(questions.map((q) => q.topic))], tags: [], types: [...new Set(questions.map((q) => q.type))] },
     source: { kind: 'local', file: path.basename(input) },

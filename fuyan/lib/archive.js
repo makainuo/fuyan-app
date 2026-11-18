@@ -12,6 +12,7 @@ const winps = require('./winps');
 
 const RUNTIME_TAGS = `
 <link rel="stylesheet" href="/content/overlay.css">
+<link rel="stylesheet" href="/content/overlay-b.css">
 <style id="fuyan-host-fix">
   /* 宿主环境修正：iframe 内不需要站点自己的滚动条样式 */
   html{scrollbar-width:thin}
@@ -114,7 +115,11 @@ async function buildContentDoc(id) {
   const file = path.join(store.archivePath(id), 'content.html');
   let html = await fsp.readFile(file, 'utf8');
   if (!html.includes('/content/overlay.css')) {
-    html = html.replace(/<\/head>/i, RUNTIME_TAGS + '</head>');
+    // 复习工作台已有自己的 review.css / review-b.css，不再叠加旧存档的 B 覆盖层。
+    const tags = /class=["'][^"']*\breview-board\b/.test(html)
+      ? RUNTIME_TAGS.replace('<link rel="stylesheet" href="/content/overlay-b.css">', '')
+      : RUNTIME_TAGS;
+    html = html.replace(/<\/head>/i, tags + '</head>');
   }
   if (!html.includes('/content/runtime.js')) {
     html = html.replace(/<\/body>/i, RUNTIME_SCRIPT + '</body>');

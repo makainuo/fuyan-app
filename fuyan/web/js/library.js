@@ -20,22 +20,66 @@ function sourceLabel(m) {
   return `本地导入${s.file ? ' · ' + esc(s.file) : ''}`;
 }
 
-function card(m) {
+const SUBJECT_COLORS = ['#8C3B2E', '#0F766E', '#4F5BD5', '#A86A1C', '#6D4C9F', '#2F6F4E', '#B44237', '#315D7A'];
+const SUBJECT_ACCENTS = { digestive: '#8C3B2E', infectious: '#0F766E' };
+function colorHash(id) {
+  let h = 0;
+  for (const ch of String(id || '')) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return SUBJECT_COLORS[h % SUBJECT_COLORS.length];
+}
+function subjectColor(a, index = 0) {
+  if (!a) return SUBJECT_COLORS[0];
+  if (SUBJECT_ACCENTS[a.id]) return SUBJECT_ACCENTS[a.id];
+  if (a.accent && !/^#b4552d$/i.test(a.accent)) return a.accent;
+  return colorHash(a.id || index);
+}
+
+function card(m, index = 0) {
   const upd = state.archiveUpdates && state.archiveUpdates[m.id];
-  return `<div class="arc" data-id="${esc(m.id)}" style="--arc-accent:${esc(m.accent || '#0f766e')}">
-    <h3>${esc(m.title)}${upd ? ` <span class="tag warn" data-update="${esc(m.id)}" title="网盘上有新版本，点这里拉取">网盘有更新</span>` : ''}</h3>
-    <div class="sub">${esc(m.subtitle || '')}${m.version ? ' · v' + esc(m.version) : ''}</div>
-    <div class="nums">${statLine(m)}</div>
-    <div class="meta">
-      <span class="tag plain">${sourceLabel(m)}</span>
-      <span>${m.builtAt ? fmtDate(m.builtAt) : ''}</span>
-      <div class="acts">
-        <button class="btn sm" data-open="${esc(m.id)}">打开</button>
-        <button class="btn sm" data-quiz="${esc(m.id)}" ${m.quiz && m.quiz.total ? '' : 'disabled'}>刷题</button>
-        <button class="btn sm" data-more="${esc(m.id)}">⋯</button>
+  const color = subjectColor(m, index);
+  return `<div class="arc" data-id="${esc(m.id)}" style="--arc-accent:${esc(color)}">
+    <button class="arc-head" type="button" aria-expanded="false" title="展开存档信息">
+      <span class="arc-dot"></span>
+      <span class="arc-title">${esc(m.title)}</span>
+      ${upd ? `<span class="tag warn" data-update="${esc(m.id)}" title="网盘上有新版本，点这里拉取">有更新</span>` : ''}
+      <span class="arc-badge">v${esc(m.version || '')}</span>
+      <span class="arc-chev">⌄</span>
+    </button>
+    <div class="arc-body">
+      <div class="sub">${esc(m.subtitle || '')}${m.version ? ' · v' + esc(m.version) : ''}</div>
+      <div class="nums">${statLine(m)}</div>
+      <div class="meta">
+        <span class="tag plain">${sourceLabel(m)}</span>
+        <span>${m.builtAt ? fmtDate(m.builtAt) : ''}</span>
+        <div class="acts">
+          <button class="btn sm" data-open="${esc(m.id)}">打开</button>
+          <button class="btn sm" data-quiz="${esc(m.id)}" ${m.quiz && m.quiz.total ? '' : 'disabled'}>刷题</button>
+          <button class="btn sm" data-more="${esc(m.id)}">⋯</button>
+        </div>
       </div>
     </div>
   </div>`;
+}
+
+function renderLibrarySide(archives, activeId) {
+  const side = document.getElementById('side');
+  if (!side) return;
+  side.hidden = false;
+  const recent = archives.find((a) => a.id === activeId) || archives[0];
+  const courses = archives.map((a, i) => `
+    <a href="#/read/${encodeURIComponent(a.id)}" class="${a.id === activeId ? 'on' : ''}" title="${esc(a.title)}">
+      <span class="course-dot" style="--c:${esc(subjectColor(a, i))}"></span>
+      <span class="t">${esc(a.title)}</span>
+      <span class="n">v${esc(a.version || '')}</span>
+    </a>`).join('');
+  side.innerHTML = `
+    <div class="grp">LIBRARY</div>
+    <a href="#/" class="on"><span class="ico">▦</span>存档库<span class="n">${archives.length}</span></a>
+    ${recent ? `<a href="#/read/${encodeURIComponent(recent.id)}"><span class="ico">◷</span>最近学习</a>
+    <a href="#/notes/${encodeURIComponent(recent.id)}"><span class="ico">✎</span>批注</a>` : ''}
+    <a href="#/settings"><span class="ico">⚙</span>设置</a>
+    ${courses ? `<div class="grp">COURSES</div>${courses}` : ''}
+    <div class="side-foot">本地优先<br>v0.1.9</div>`;
 }
 
 export async function render() {
@@ -44,11 +88,43 @@ export async function render() {
   main.className = 'main scroll';
   App.setCrumbs(`<b>存档库</b>`);
   const archives = state.archives || [];
+  const recent = archives.find((a) => a.id === state.archiveId) || archives[0];
+  let progress = null;
+  if (recent) {
+    try { progress = (await api.getProgress(recent.id)).progress; } catch (_) {}
+  }
+  const totalQ = archives.reduce((n, a) => n + ((a.quiz && a.quiz.total) || 0), 0);
+  const doneQ = progress && progress.quiz && progress.quiz.records ? Object.keys(progress.quiz.records).length : 0;
+  const readAnchor = progress && progress.read ? progress.read.anchor : '';
+  const readNav = recent ? (recent.nav || []).find((n) => n.sectionId === readAnchor) : null;
+  const accent = subjectColor(recent, archives.indexOf(recent));
+  const initial = recent ? String(recent.title || '').slice(0, 1) : '';
+  const recentStats = recent ? statLine(recent) : '';
+  const continueCard = recent ? `
+    <div class="continue-card">
+      <div class="continue-cover" style="--c:${esc(accent)}">
+        <span class="cc-en">CONTINUE</span>
+        <span class="cc-char">${esc(initial)}</span>
+        <span class="cc-v">v${esc(recent.version || '')}</span>
+      </div>
+      <div class="continue-body">
+        <div class="kicker">继续学习</div>
+        <h2>${esc(recent.title)}</h2>
+        <p>${esc(recent.subtitle || '')}${recentStats ? ' · ' + recentStats.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : ''}</p>
+        <div class="cc-progress"><span style="width:${recent.quiz && recent.quiz.total ? Math.min(100, Math.round(doneQ / recent.quiz.total * 100)) : 0}%"></span></div>
+        <div class="cc-foot">
+          <span>${readNav ? '上次读到《' + esc(readNav.title) + '》' : '还没开始阅读'}${recent.quiz && recent.quiz.total ? ` · 已做 ${doneQ} / ${recent.quiz.total} 题` : ''}</span>
+          <a class="btn primary" href="#/read/${encodeURIComponent(recent.id)}">继续阅读 →</a>
+        </div>
+      </div>
+    </div>` : '';
   main.innerHTML = `<div class="wrap">
     <div class="lib-hero">
+      <div class="kicker">YOUR LIBRARY · 2026</div>
       <h1>我的存档</h1>
-      <p>一个存档 = 一门课的内容 + 题库。导入后就能阅读、刷题、做批注、问 DeepSeek。</p>
+      <p>${archives.length} 门课程 · ${totalQ} 道题。继续上次的进度，或导入一份新资料。</p>
     </div>
+    ${continueCard}
     <div class="lib-bar">
       <button class="btn primary" data-import="zip">＋ 导入存档包</button>
       <button class="btn" data-import="url">🔗 从链接导入</button>
@@ -68,12 +144,21 @@ export async function render() {
       </div>
       <button class="btn primary" id="btn-convert">选择文件</button>
     </div>
-    <div id="online-catalog"></div>
-    ${archives.length ? `<div class="lib-grid">${archives.map(card).join('')}</div>`
-      : `<div class="lib-empty"><div class="big">还没有存档</div>
-         <p>选择一份复习资料，或导入已有的课程存档包。</p></div>`}
+    <div class="lib-columns">
+      <section class="lib-col">
+        <div class="col-head"><h3>本地存档</h3><span>${archives.length} 门</span></div>
+        ${archives.length ? `<div class="lib-grid">${archives.map((m, i) => card(m, i)).join('')}</div>`
+          : `<div class="lib-empty"><div class="big">还没有存档</div>
+             <p>选择一份复习资料，或导入已有的课程存档包。</p></div>`}
+      </section>
+      <section class="lib-col">
+        <div class="col-head"><h3>GitHub 在线存档</h3><span>作者发布</span></div>
+        <div id="online-catalog"></div>
+      </section>
+    </div>
   </div>`;
 
+  renderLibrarySide(archives, recent ? recent.id : '');
   main.querySelectorAll('[data-import]').forEach((b) => {
     b.onclick = () => doImport(b.dataset.import, b);
   });
@@ -113,29 +198,45 @@ async function loadCatalog() {
   if (!host) return;
   try {
     const r = await api.catalog();
-    if (!r.configured) return;
-    if (!r.ok) {
-      host.innerHTML = `<div class="note" style="margin-bottom:16px">${esc(r.message || '在线存档库读取失败')}</div>`;
+    if (!r.configured) {
+      host.innerHTML = `<div class="col-empty">还没有配置在线存档库。<br>在设置里填入 archives.json 地址即可。</div>`;
       return;
     }
-    if (!r.items.length) return;
-    host.innerHTML = `<h3 style="font-size:16px;margin:20px 0 10px">GitHub 在线存档 <span class="muted small" style="font-weight:400">· 作者发布</span></h3>
-      <div class="lib-grid">${r.items.map((it) => {
-        const installed = (state.archives || []).some((a) => a.id === it.id);
-        return `
-        <div class="arc" style="--arc-accent:${esc(it.accent || '#0f766e')}">
-          <h3>${esc(it.title || it.id)}${installed ? ' <span class="tag plain">已安装</span>' : ''}</h3>
-          <div class="sub">${esc(it.subtitle || '')}${it.version ? ' · v' + esc(it.version) : ''}</div>
-          <div class="nums">${it.notes ? `<span>${esc(it.notes)}</span>` : ''}</div>
-          <div class="meta">
-            <span class="tag plain">${it.size ? Math.round(it.size / 1024) + ' KB' : '在线'}</span>
-            <span>${esc(it.updatedAt || '')}</span>
-            <div class="acts"><button class="btn sm" data-curl='${esc(JSON.stringify(it.url || ''))}'>${installed ? '重新下载' : '下载导入'}</button></div>
+    if (!r.ok) {
+      host.innerHTML = `<div class="note">${esc(r.message || '在线存档库读取失败')}</div>`;
+      return;
+    }
+    if (!r.items.length) {
+      host.innerHTML = `<div class="col-empty">作者还没有发布在线存档。</div>`;
+      return;
+    }
+    host.innerHTML = `<div class="lib-grid">${r.items.map((it, idx) => {
+      const installed = (state.archives || []).some((a) => a.id === it.id);
+      const color = subjectColor(it, idx + 2);
+      return `
+        <div class="arc" data-catalog-id="${esc(it.id)}" style="--arc-accent:${esc(color)}">
+          <button class="arc-head" type="button" aria-expanded="false" title="展开在线存档信息">
+            <span class="arc-dot"></span>
+            <span class="arc-title">${esc(it.title || it.id)}</span>
+            ${installed ? '<span class="tag plain">已安装</span>' : ''}
+            <span class="arc-badge">${it.version ? 'v' + esc(it.version) : '在线'}</span>
+            <span class="arc-chev">⌄</span>
+          </button>
+          <div class="arc-body">
+            <div class="sub">${esc(it.subtitle || '')}</div>
+            <div class="nums">${it.notes ? `<span>${esc(it.notes)}</span>` : ''}</div>
+            <div class="meta">
+              <span class="tag plain">${it.size ? Math.round(it.size / 1024) + ' KB' : '在线'}</span>
+              <span>${esc(it.updatedAt || '')}</span>
+              <div class="acts"><button class="btn sm" data-curl='${esc(JSON.stringify(it.url || ''))}'>${installed ? '重新下载' : '下载导入'}</button></div>
+            </div>
           </div>
         </div>`;
-      }).join('')}</div>`;
+    }).join('')}</div>`;
+    bindArcToggles(host);
     host.querySelectorAll('[data-curl]').forEach((b) => {
-      b.onclick = async () => {
+      b.onclick = async (e) => {
+        e.stopPropagation();
         const url = JSON.parse(b.dataset.curl);
         if (!url) return toast('这个条目没有下载地址', 'bad');
         b.disabled = true;
@@ -240,7 +341,19 @@ function openUrlImport(prefill = '') {
 }
 
 /* ---------------------------------------------------------------- 更多 */
+function bindArcToggles(root) {
+  root.querySelectorAll('.arc-head').forEach((h) => {
+    h.onclick = (e) => {
+      e.stopPropagation();
+      const arc = h.closest('.arc');
+      const open = arc.classList.toggle('open');
+      h.setAttribute('aria-expanded', open ? 'true' : 'false');
+    };
+  });
+}
+
 function bindCards(root) {
+  bindArcToggles(root);
   root.querySelectorAll('[data-open]').forEach((b) => {
     b.onclick = (e) => { e.stopPropagation(); App.go(`#/read/${b.dataset.open}`); };
   });
@@ -257,9 +370,6 @@ function bindCards(root) {
       const a = findArchive(id);
       openQuark({ highlight: (a.source || {}).quarkFid, highlightName: (a.source || {}).quarkName, archiveId: id });
     };
-  });
-  root.querySelectorAll('.arc').forEach((c) => {
-    c.onclick = () => App.go(`#/read/${c.dataset.id}`);
   });
 }
 

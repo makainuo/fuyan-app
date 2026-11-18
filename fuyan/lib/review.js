@@ -258,7 +258,7 @@ function renderWorkspace({ title, id, sections, questionCount = 0, practiceCount
     </section>`).join('\n');
   return `<!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${esc(title)}</title><link rel="stylesheet" href="/content/review.css"></head>
+<title>${esc(title)}</title><link rel="stylesheet" href="/content/review.css"><link rel="stylesheet" href="/content/review-b.css"></head>
 <body class="review-board"><main>
   <header class="workspace-cover">
     <div><h1 class="review-title">${esc(title)}</h1><p>${[sections.some((s) => !s.count) ? sections.filter((s) => !s.count).length + ' 个讲义章节' : '', questionCount ? questionCount.toLocaleString('zh-CN') + ' 道题' : ''].filter(Boolean).join(' · ')}</p></div>

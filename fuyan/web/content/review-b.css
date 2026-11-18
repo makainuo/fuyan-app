@@ -1,0 +1,70 @@
+/* ==========================================================================
+   B 主题：与外壳一致的复习工作台
+   ========================================================================== */
+.review-board{
+  --review-bg:#F6F7F9;
+  --review-panel:#FFFFFF;
+  --review-text:#14161A;
+  --review-muted:#6B7280;
+  --review-border:#E6E8EC;
+  --review-accent:#4F5BD5;
+  --review-soft:#EEF0FF;
+  background:var(--review-bg);
+  color:var(--review-text);
+  font:15px/1.75 "Noto Sans SC","Segoe UI","Microsoft YaHei UI",sans-serif;
+}
+[data-theme="dark"] .review-board{
+  --review-bg:#0F1115;
+  --review-panel:#151922;
+  --review-text:#E9EBF0;
+  --review-muted:#98A0AE;
+  --review-border:#252A34;
+  --review-accent:#8B93FF;
+  --review-soft:#1D2140;
+}
+.review-board main{max-width:62rem;padding:clamp(1.2rem,4vw,2.4rem) clamp(.9rem,4vw,2rem) 4rem}
+.workspace-cover{
+  border:1px solid var(--review-border);
+  border-radius:14px;
+  background:var(--review-panel);
+  color:var(--review-text);
+  padding:clamp(1.2rem,4vw,2.2rem);
+  box-shadow:0 1px 2px rgba(15,23,42,.04);
+}
+.workspace-cover .review-title{
+  font-family:"Noto Serif SC","Songti SC",serif;
+  font-size:clamp(1.7rem,4vw,2.6rem);
+  font-weight:600;
+  letter-spacing:-.02em;
+}
+.workspace-cover p{color:var(--review-muted)}
+.workspace-start{
+  border-radius:9px;
+  background:var(--review-accent);
+  color:#fff;
+  padding:.6rem 1rem;
+  font-weight:600;
+}
+.workspace-tools{background:color-mix(in srgb,var(--review-bg) 92%,transparent);backdrop-filter:blur(10px);border-bottom-color:var(--review-border)}
+.workspace-jumps a{border-radius:7px;border-color:var(--review-border);color:var(--review-muted);background:var(--review-panel)}
+.workspace-jumps a:hover{border-color:var(--review-accent);color:var(--review-accent);text-decoration:none}
+.workspace-jumps a span{background:var(--review-soft);color:var(--review-accent)}
+.workspace-section-head h2{font-family:"Noto Serif SC","Songti SC",serif;font-size:clamp(1.25rem,3vw,1.6rem);font-weight:600}
+.workspace-practice{color:var(--review-accent);font-weight:600}
+.review-actions button{background:var(--review-panel);border-color:var(--review-border);color:var(--review-muted)}
+.review-actions button:hover{border-color:var(--review-accent);color:var(--review-accent)}
+.review-card{border-radius:10px;border-color:var(--review-border);background:var(--review-panel)}
+article.review-card > h3{font-family:"Noto Serif SC","Songti SC",serif;font-size:1.05rem;font-weight:600}
+.review-card summary{color:var(--review-accent)}
+.review-card summary:hover{background:var(--review-bg)}
+.review-options li{font-size:.95rem}
+.review-answer{border-top-color:var(--review-border)}
+.review-label{font-family:"Cascadia Mono",Consolas,monospace;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--review-muted)}
+.review-case{background:var(--review-soft);border-inline-start-color:var(--review-accent);border-radius:6px}
+.workspace-prose h3{font-family:"Noto Serif SC","Songti SC",serif}
+.workspace-prose p,.workspace-prose li{line-height:1.8}
+.workspace-prose table{font-size:.86rem}
+.workspace-prose th{background:var(--review-bg);font-weight:600}
+.workspace-prose code{background:var(--review-soft);color:var(--review-accent)}
+[data-theme="dark"] .workspace-start{background:var(--review-accent);color:#0D1020}
+[data-theme="dark"] .workspace-start:hover{background:color-mix(in srgb,var(--review-accent) 84%,#fff);color:#0D1020}
