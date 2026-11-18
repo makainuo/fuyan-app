@@ -1,6 +1,6 @@
 {
   "name": "zailao-app",
-  "version": "0.1.3",
+  "version": "0.1.6",
   "private": true,
   "description": "再捞我一下：医学课程阅读、刷题、批注与复习工具",
   "main": "server.js",

@@ -1,4 +1,4 @@
-# 再捞我一下 · Windows v0.1.3
+# 再捞我一下 · Windows
 
 > 一个「外壳 + 存档」式的复习软件：软件负责阅读、检索、刷题、批注、问 AI；**存档**承载一门课的内容与题库。
 > 换课 = 换存档，不用改代码。
@@ -12,7 +12,7 @@
 |---|---|
 | 主仓库（优先更新） | https://github.com/makainuo/zailao-app/tree/master/fuyan |
 | 上游（同步 / PR） | https://github.com/Cheakerion/shauti-app/tree/master/fuyan |
-| 软件下载 | https://github.com/makainuo/zailao-app/releases/tag/v0.1.3 |
+| 软件下载 | [GitHub Releases](https://github.com/makainuo/zailao-app/releases/latest) |
 | 在线存档清单 | `https://cdn.jsdelivr.net/gh/makainuo/zailao-app@master/fuyan/dist/archives.json` |
 | 更新源 | 仓库 `makainuo/zailao-app` · 分支 `master` · 路径 `fuyan/` |
 

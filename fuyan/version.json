@@ -1,6 +1,6 @@
 {
-  "version": "0.1.5",
-  "update": 6,
-  "notes": "修复中文路径文件选择后提示找不到文件（对话框输出编码）；清理旧品牌/旧入口；存档转化与导入存档包实测通过",
-  "url": "https://cdn.jsdelivr.net/gh/makainuo/zailao-app@master/fuyan/dist/zailao-v0.1.5.zip"
+  "version": "0.1.6",
+  "update": 7,
+  "notes": "新增统一复习工作台和六种题型的 JSON 导入。Windows x64 便携包内置运行环境，解压后双击启动。",
+  "url": "https://github.com/makainuo/zailao-app/releases/download/v0.1.6/zailao-v0.1.6.zip"
 }
