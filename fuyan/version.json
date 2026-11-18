@@ -1,7 +1,10 @@
 {
-  "version": "0.1.8",
-  "update": 9,
-  "notes": "支持按课次展开复习目录。Windows 便携版可在软件内下载并校验完整更新包，确认后自动重启安装，启动失败时回退。",
-  "url": "https://github.com/makainuo/zailao-app/releases/download/v0.1.8/zailao-v0.1.8.zip",
-  "capabilities": ["lesson-navigation", "in-app-updates"]
+  "version": "0.1.9",
+  "update": 10,
+  "notes": "逐课目录 + 软件内更新；自动识别 Word/PPT/Markdown/文本/HTML 题库；修复 Markdown 误判、清理旧入口并完善打包校验",
+  "url": "https://github.com/makainuo/zailao-app/releases/download/v0.1.9/zailao-v0.1.9.zip",
+  "capabilities": [
+    "lesson-navigation",
+    "in-app-updates"
+  ]
 }

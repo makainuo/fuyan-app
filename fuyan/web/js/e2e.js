@@ -301,7 +301,7 @@ async function scenarioLibrary() {
   await goto('#/');
   await waitFor(() => $('.arc'), 8000);
   ok('存档库: 卡片渲染', $$('.arc').length >= 2, 'cards=' + $$('.arc').length);
-  ok('存档转化: 首页入口存在', !!$('#btn-convert') && /存档转化/.test(($('#convert-card') || {}).textContent || ''));
+  ok('存档转化: 首页入口存在', !!$('#btn-convert') && /(存档转化|导入资料)/.test(($('#convert-card') || {}).textContent || ''));
   const quarkOnes = (state.archives || []).filter((a) => (a.source || {}).kind === 'quark');
   if (!quarkOnes.length) {
     ok('网盘: 当前没有网盘来源存档，跳过更新检查', true, 'local-only');

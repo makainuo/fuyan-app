@@ -136,7 +136,8 @@ function parseReview(source) {
   const headerEnd = separator.test(lines[0]) ? lines.findIndex((line, i) => i > 0 && separator.test(line)) : -1;
   const header = lines.slice(1, Math.max(1, headerEnd));
   const format = header.find((line) => /^format\s*:\s*zailao-review@/i.test(line));
-  if (!format && !(headerEnd > 0 && lines.some((line) => types.has(heading.exec(line.trim())?.[1])))) return null;
+  // 只有显式声明 format 才走复习资料格式，避免把带 YAML frontmatter 的普通笔记误判。
+  if (!format) return null;
   if (format && !/^format\s*:\s*zailao-review@1\s*$/i.test(format)) throw new Error('不支持的复习资料格式版本，请使用 zailao-review@1。');
 
   const title = header.find((line) => /^title\s*:/.test(line))?.replace(/^title\s*:\s*/, '').trim();

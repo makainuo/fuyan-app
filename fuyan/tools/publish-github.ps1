@@ -39,11 +39,13 @@ Write-Host "== 1/5 打包软件 ==" -ForegroundColor Cyan
 $stage = Join-Path $env:TEMP ("fuyan-pack-" + [guid]::NewGuid().ToString("N"))
 New-Item -ItemType Directory -Force -Path $stage | Out-Null
 $items = @("server.js", "lib", "web", "tools", "docs", "assets", "README.md", "package.json",
-           "version.json", "启动再捞我一下.bat", "启动再捞我一下.vbs", "启动复研.bat", "启动复研.vbs", ".gitignore", ".gitattributes")
+           "version.json", "启动再捞我一下.bat", "启动再捞我一下.vbs", ".gitignore", ".gitattributes")
 foreach ($i in $items) {
   $p = Join-Path $root $i
   if (Test-Path -LiteralPath $p) { Copy-Item -LiteralPath $p -Destination $stage -Recurse -Force }
 }
+# Never ship local scratch scripts such as tools/_addcards.mjs.
+Get-ChildItem (Join-Path $stage "tools") -Filter "_*.mjs" -File -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
 # Always bundle the verified portable runtime; never copy a machine-specific PATH installation.
 & "$PSHOME\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root 'tools\ensure-node.ps1') -IgnorePath -Auto -Quiet
 if ($LASTEXITCODE -ne 0) { throw 'Cannot package without a portable runtime.' }
@@ -53,9 +55,8 @@ foreach ($runtimeFile in @('node.exe', 'LICENSE')) {
   Copy-Item -LiteralPath (Join-Path $root ('runtime\node\' + $runtimeFile)) -Destination (Join-Path $stage 'runtime\node') -Force
 }
 if (-not (Test-Path -LiteralPath (Join-Path $stage 'runtime\node\node.exe'))) { throw 'Runtime missing from package.' }
-# 不带存档、不带用户数据、不带 node_modules；截图也不进安装包（省体积）
+# 不带存档、不带用户数据、不带 node_modules
 Remove-Item (Join-Path $stage "data") -Recurse -Force -ErrorAction SilentlyContinue
-Remove-Item (Join-Path $stage "docs\screens") -Recurse -Force -ErrorAction SilentlyContinue
 $zip = Join-Path $dist ("zailao-v$ver.zip")
 if (Test-Path $zip) { Remove-Item $zip -Force }
 Compress-Archive -Path (Join-Path $stage "*") -DestinationPath $zip -Force

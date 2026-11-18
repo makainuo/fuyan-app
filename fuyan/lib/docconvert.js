@@ -601,7 +601,7 @@ async function convertAndImport(input, opts = {}) {
   const html = review ? renderReview(review, title, id, esc, proseSections(original))
     : renderWorkspace({ title, id, sections: proseSections(model.sections), esc });
   fs.writeFileSync(path.join(folder, 'content.html'), html, 'utf8');
-  if (review) fs.writeFileSync(path.join(folder, 'questions.json'), JSON.stringify({ count: questions.length, questions }, null, 2), 'utf8');
+  if (review) fs.writeFileSync(path.join(folder, 'questions.json'), JSON.stringify({ schema: 'fuyan/questions@1', count: questions.length, questions }, null, 2), 'utf8');
 
   const files = [];
   (function walk(dir, rel) {
