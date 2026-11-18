@@ -1,6 +1,6 @@
 {
  "schema": "fuyan/catalog@1",
- "updatedAt": "2026-11-16",
+ "updatedAt": "2026-11-18",
  "archives": [
   {
    "id": "infectious",
@@ -23,6 +23,17 @@
    "size": 117973,
    "updatedAt": "2026-11-16",
    "url": "https://cdn.jsdelivr.net/gh/makainuo/zailao-app@master/fuyan/dist/digestive-2.2.0.zip"
+  },
+  {
+   "id": "cardiovascular",
+   "title": "心血管系统",
+   "subtitle": "逐课复习",
+   "version": "1.2.1",
+   "accent": "#9d3c53",
+   "notes": "心血管系统疾病总论＋心力衰竭 · 16 名解 · 8 简答 · 1 套病例 · 217 道选择题",
+   "size": 88741,
+   "updatedAt": "2026-11-18",
+   "url": "https://cdn.jsdelivr.net/gh/makainuo/zailao-app@master/fuyan/dist/cardiovascular-1.2.1.zip"
   }
  ]
 }
