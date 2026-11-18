@@ -1,12 +1,13 @@
 ﻿# 再捞我一下 · 运行环境检查 / 便携版 Node 下载
 #
-# 逻辑：PATH 里找 node → 程序目录 runtime\node → 都没有就询问用户是否下载便携版
-# 退出码：0 = 可用；2 = 没找到（CheckOnly）；3 = 用户取消；1 = 出错
+# 逻辑：便携环境 → FUYAN_NODE / PATH → 自动下载兼容环境
+# 退出码：0 = 可用；2 = 没找到（CheckOnly）；1 = 出错
 #
 # 便携版只解压到 <程序目录>\runtime\node，不写注册表、不需要管理员权限。
 
 param(
-  [switch]$Auto,        # 不问，直接下载（测试用）
+  [switch]$Auto,        # 兼容旧调用；默认自动准备
+  [switch]$Quiet,       # 命令行打包时不显示进度窗口
   [switch]$CheckOnly,   # 只检查，不下载
   [switch]$IgnorePath,  # 忽略 PATH 里的 node（模拟“没装”）
   [string]$Root = ''
@@ -38,28 +39,20 @@ function Test-NodeExe([string]$path) {
 }
 
 function Find-Node {
+  if (Test-NodeExe $nodeExe) { return $nodeExe }
   if (-not $IgnorePath) {
-    $cmd = Get-Command node -ErrorAction SilentlyContinue
+    if (Test-NodeExe $env:FUYAN_NODE) { return $env:FUYAN_NODE }
+    $cmd = Get-Command node -CommandType Application -ErrorAction SilentlyContinue
     if ($cmd -and (Test-NodeExe $cmd.Source)) { return $cmd.Source }
   }
-  if (Test-NodeExe $nodeExe) { return $nodeExe }
   return ''
 }
 
-function Show-MissingDialog {
-  Add-Type -AssemblyName System.Windows.Forms
-  $text = @"
-没有找到 Node.js 运行环境。
-
-是：自动下载便携版（约 30 MB）
-　　只放进程序目录，不装系统
-否：打开 Node.js 官网自己装
-取消：先不打开
-"@
-  return [System.Windows.Forms.MessageBox]::Show($text, '再捞我一下 · 缺少运行环境', 'YesNoCancel', 'Question')
-}
-
 function Download-Node([string]$url, [string]$dst) {
+  if ($Quiet) {
+    Invoke-WebRequest -Uri $url -OutFile $dst -UseBasicParsing -TimeoutSec 240
+    return
+  }
   Add-Type -AssemblyName System.Windows.Forms
   $form = New-Object System.Windows.Forms.Form
   $form.Text = '再捞我一下 · 正在准备运行环境'
@@ -72,7 +65,7 @@ function Download-Node([string]$url, [string]$dst) {
   $form.TopMost = $true
 
   $label = New-Object System.Windows.Forms.Label
-  $label.Text = "正在下载 Node.js 便携版（约 30 MB）…`n下载完成后会自动解压，请稍候。"
+  $label.Text = "首次启动正在自动准备所需文件（约 30 MB）…`n下载完成后会自动解压，请稍候。"
   $label.AutoSize = $false
   $label.Width = 420
   $label.Height = 42
@@ -92,6 +85,7 @@ function Download-Node([string]$url, [string]$dst) {
   $job = Start-Job -ScriptBlock {
     param($u, $d)
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    $ErrorActionPreference = 'Stop'
     Invoke-WebRequest -Uri $u -OutFile $d -UseBasicParsing -TimeoutSec 240
     return $true
   } -ArgumentList $url, $dst
@@ -123,15 +117,6 @@ if ($CheckOnly) {
   exit 2
 }
 
-if (-not $Auto) {
-  $ans = [string](Show-MissingDialog)
-  if ($ans -eq 'No') {
-    Start-Process 'https://nodejs.org/zh-cn/download'
-    exit 3
-  }
-  if ($ans -ne 'Yes') { exit 3 }
-}
-
 $ok = $false
 $lastErr = ''
 foreach ($url in $MIRRORS) {
@@ -146,6 +131,8 @@ foreach ($url in $MIRRORS) {
     Expand-Archive -LiteralPath $tmpZip -DestinationPath $tmpDir -Force
     $inner = Get-ChildItem -LiteralPath $tmpDir -Directory | Select-Object -First 1
     if (-not $inner) { throw '解压后没有找到目录' }
+    if (-not (Test-NodeExe (Join-Path $inner.FullName 'node.exe'))) { throw '下载的运行环境无法运行' }
+    if ([IO.Path]::GetFullPath($nodeDir) -ne [IO.Path]::GetFullPath((Join-Path $Root 'runtime\node'))) { throw 'Invalid runtime path' }
 
     if (Test-Path -LiteralPath $nodeDir) { Remove-Item -LiteralPath $nodeDir -Recurse -Force }
     New-Item -ItemType Directory -Force -Path $runtimeDir | Out-Null
@@ -163,9 +150,10 @@ foreach ($url in $MIRRORS) {
 }
 
 if (-not $ok) {
+  if ($Quiet) { Write-Error $lastErr; exit 1 }
   Add-Type -AssemblyName System.Windows.Forms
   [System.Windows.Forms.MessageBox]::Show(
-    "没能自动装好运行环境。`n`n$lastErr`n`n可以手动安装 Node.js 18+ 后再打开再捞我一下。",
+    "没能自动装好运行环境。`n`n$lastErr`n`n请检查网络后重试，或下载包含运行环境的完整软件包，解压后直接使用。",
     '再捞我一下 · 准备失败', 'OK', 'Error') | Out-Null
   exit 1
 }

@@ -13,6 +13,7 @@ const path = require('path');
 const zlib = require('zlib');
 const store = require('./store');
 const archiveLib = require('./archive');
+const { parseReview, parseReviewJson, renderReview, renderWorkspace } = require('./review');
 
 /* ---------------------------------------------------------------- ZIP 读 */
 
@@ -411,8 +412,8 @@ function mdInline(s) {
     .replace(/`([^`]+)`/g, '<code>$1</code>')
     .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
 }
-function parseMd(file, model) {
-  const lines = fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n').split('\n');
+function parseMd(source, model) {
+  const lines = source.replace(/\r\n/g, '\n').split('\n');
   let cur = newSection(model, '');
   let i = 0;
   while (i < lines.length) {
@@ -469,27 +470,12 @@ function blockHtml(b) {
   return '';
 }
 
-const CSS = `
-:root{--bg:#faf7f0;--panel:#fffdf7;--ink:#20201a;--muted:#6b6b5e;--line:#e7dfd0;--accent:#b4552d}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Serif SC","Songti SC","SimSun",serif;line-height:1.9}
-main{max-width:900px;margin:0 auto;padding:30px 34px 90px}
-section{margin-bottom:44px}
-h1{font-size:30px;margin:8px 0 6px;padding-bottom:8px;border-bottom:2px solid var(--accent)}
-h2{font-size:21px;margin:30px 0 10px;padding-left:10px;border-left:4px solid var(--accent)}
-h3{font-size:17px;margin:22px 0 8px}
-p{margin:10px 0}ul,ol{margin:10px 0 10px 24px;padding:0}li{margin:4px 0}
-.table-wrap{overflow:auto;margin:14px 0}
-table{border-collapse:collapse;width:100%;font-size:14px;background:var(--panel)}
-th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
-th{background:#f3ecdd}img{max-width:100%;border-radius:10px;margin:12px 0}
-pre{background:#2b2a26;color:#f4efe4;padding:14px 16px;border-radius:10px;overflow:auto}
-code{font-family:ui-monospace,Consolas,monospace;background:#f0e9da;padding:1px 5px;border-radius:4px}
-pre code{background:none;padding:0;color:inherit}
-`;
-
-function renderHtml(model, title) {
-  const parts = model.sections.map((s) => "<section id=\"" + esc(s.id) + "\">\n<h1>" + esc(s.title) + "</h1>\n" + s.blocks.map(blockHtml).join('\n') + "\n</section>");
-  return '<!doctype html>\n<html lang="zh-CN">\n<head>\n<meta charset="utf-8">\n<title>' + esc(title) + '</title>\n<style>' + CSS + '</style>\n</head>\n<body>\n<main>\n' + parts.join('\n') + '\n</main>\n</body>\n</html>\n';
+function renderHtml(model, title, id) {
+  const sections = model.sections.map((section) => ({
+    ...section,
+    body: '<div class="workspace-prose">' + section.blocks.map(blockHtml).join('\n') + '</div>',
+  }));
+  return renderWorkspace({ title, id, sections, esc });
 }
 
 /* ---------------------------------------------------------------- 主流程 */
@@ -502,48 +488,62 @@ async function convertAndImport(input, opts = {}) {
   const ext = path.extname(input).toLowerCase();
   if (!fs.existsSync(input)) throw new Error('找不到文件：' + input);
   if (ext === '.pdf') throw new Error('PDF 暂不支持：建议先用 Word 打开并另存为 .docx。');
-  if (!['.docx', '.pptx', '.md', '.markdown', '.txt'].includes(ext)) {
-    throw new Error('不支持的格式：' + ext + '（支持 .docx / .pptx / .md / .txt）');
+  if (!['.json', '.docx', '.pptx', '.md', '.markdown', '.txt'].includes(ext)) {
+    throw new Error('不支持的格式：' + ext + '（支持 .json / .docx / .pptx / .md / .txt）');
   }
 
+  const markdown = ['.md', '.markdown', '.txt'].includes(ext) ? fs.readFileSync(input, 'utf8') : null;
+  const review = ext === '.json' ? parseReviewJson(fs.readFileSync(input, 'utf8'))
+    : markdown === null ? null : parseReview(markdown);
   const id = opts.id || safeId();
-  const title = opts.title || path.basename(input, path.extname(input));
+  if (!/^[A-Za-z0-9_-][A-Za-z0-9._-]{0,63}$/.test(id) || id.endsWith('.')) throw new Error('无效的存档 ID');
+  const title = opts.title || review?.title || path.basename(input, path.extname(input));
   const base = path.join(store.DATA_DIR, 'converted');
   const folder = path.join(base, id);
+  if (path.dirname(path.resolve(folder)) !== path.resolve(base)) throw new Error('无效的转换目录');
   fs.rmSync(folder, { recursive: true, force: true });
   fs.mkdirSync(folder, { recursive: true });
 
   const model = { sections: [], images: 0 };
-  if (ext === '.docx') parseDocx(input, folder, model);
-  else if (ext === '.pptx') parsePptx(input, folder, model);
-  else parseMd(input, model);
+  if (review) model.sections = review.sections;
+  else {
+    if (ext === '.docx') parseDocx(input, folder, model);
+    else if (ext === '.pptx') parsePptx(input, folder, model);
+    else parseMd(markdown, model);
+    model.sections = model.sections.filter((s) => s.blocks.length > 0);
+  }
 
-  if (!model.sections.length) model.sections.push({ id: 's1', title, blocks: [] });
-  model.sections = model.sections.filter((s) => s.blocks.length > 0);
-  if (!model.sections.length) model.sections.push({ id: 's1', title, blocks: [] });
+  if (!model.sections.length && !review?.notes?.length) model.sections.push({ id: 's1', title, blocks: [] });
   model.sections.forEach((s, i) => {
     s.id = 's' + (i + 1);
     if (!s.title) s.title = title;
   });
 
-  const nav = [{ group: '内容' }].concat(model.sections.map((s, i) => ({
-    anchor: s.id, title: s.title, badge: String(i + 1).padStart(2, '0'), sectionId: s.id,
-  })));
+  const nav = [];
+  for (const [group, sections] of [['讲义', review?.notes || []], [review ? '题库' : '内容', model.sections]]) {
+    if (!sections.length) continue;
+    nav.push({ group }, ...sections.map((s, i) => ({
+      anchor: s.id, title: s.title, badge: String(i + 1).padStart(2, '0'), sectionId: s.id, count: s.questions?.length,
+    })));
+  }
+  const questions = review?.questions || [];
 
   const manifest = {
     schema: 'fuyan/archive@1',
+    ...(review?.schema ? { reviewSchema: review.schema } : {}),
     id,
     title,
-    subtitle: '由文档转换',
+    subtitle: review ? '复习展板' : '由文档转换',
     version: '1.0.0',
     builtAt: new Date().toISOString(),
     accent: '#b4552d',
     nav,
-    quiz: { total: 0, topics: [], tags: [], types: [] },
+    quiz: { total: questions.length, topics: [...new Set(questions.map((q) => q.topic))], tags: [], types: [...new Set(questions.map((q) => q.type))] },
     source: { kind: 'local', file: path.basename(input) },
   };
   fs.writeFileSync(path.join(folder, 'manifest.json'), JSON.stringify(manifest, null, 1), 'utf8');
-  fs.writeFileSync(path.join(folder, 'content.html'), renderHtml(model, title), 'utf8');
+  fs.writeFileSync(path.join(folder, 'content.html'), review ? renderReview(review, title, id, esc) : renderHtml(model, title, id), 'utf8');
+  if (review) fs.writeFileSync(path.join(folder, 'questions.json'), JSON.stringify({ count: questions.length, questions }, null, 2), 'utf8');
 
   const files = [];
   (function walk(dir, rel) {
@@ -557,7 +557,7 @@ async function convertAndImport(input, opts = {}) {
 
   const zip = path.join(base, id + '.zip');
   writeZip(zip, files);
-  const imported = await archiveLib.importArchive(zip, { mode: 'replace' });
+  const imported = await archiveLib.importArchive(folder, { mode: 'replace' });
 
   return {
     ok: true,
@@ -565,8 +565,9 @@ async function convertAndImport(input, opts = {}) {
     title,
     zip,
     folder,
-    sections: model.sections.length,
+    sections: model.sections.length + (review?.notes?.length || 0),
     images: model.images,
+    questionCount: questions.length,
     imported: true,
     manifest: imported.manifest,
   };

@@ -44,9 +44,9 @@ node server.js --port 5300     # 指定端口
 ```
 
 > 不需要 npm install：整个程序零第三方依赖，只用 Node 自带模块。
-> **运行环境**：需要 Node 18+。没有也能用——第一次双击 `启动再捞我一下` 会检测，缺的话弹窗问你要不要
-> 自动下载便携版（约 30 MB，解压到程序目录 `runtime\node`，不装系统、不需要管理员权限）。
-> 也可以自己装 Node.js，或设 `FUYAN_NODE` 指向已有的 node.exe。
+> **开箱即用**：完整 Windows 发布包自带便携 Node，解压后双击即可，首次启动也不需要联网下载运行环境。
+> 从源码启动时，程序会自动检测并补齐运行环境；首次下载需要联网，无需安装到系统或配置 PATH。
+> 兼容已有 Node 18+，也支持用 `FUYAN_NODE` 指向已有的 node.exe。
 
 ---
 
@@ -71,6 +71,23 @@ node server.js --port 5300     # 指定端口
 刷题语义对齐好友的 Kotlin 版：**错题曾经错就一直算错**、做对不移除；「重做做错」保留记录只重置进度；会话按「存档 × 题型」独立存，杀进程重进还在。
 
 ---
+
+### 制作复习展板
+
+在首页「存档转化」下载 JSON 模板，保留格式版本 `zailao-review@1`，填写课程名 `title` 和区块 `sections`。每个区块包含题型 `type` 和题目数组 `questions`。只写已有的题型即可，空题型不会显示。每题填 `stem`（题干）和 `answer`（答案），可加 `english`（英文）和 `explanation`（解析）。
+
+| 题型 | `type` | 写法 |
+|---|---|---|
+| 单选题 | `single` | `options` 为选项文本数组，`answer` 是一个字母，如 `"B"` |
+| 多选题 | `multi` | `options` 为选项文本数组，`answer` 是至少两个不同字母，如 `["A", "C"]` |
+| 名词解释 | `explain` | `answer` 为定义文本 |
+| 简答题 | `short` | `answer` 为参考答案文本 |
+| 病例分析 | `case` | `answer` 为参考答案文本，可用 `caseText` 单独填写病例材料 |
+| 填空题 | `fill` | `answer` 可按空的顺序填文本数组，也可填写一段答案文本 |
+
+点击「选择文件」导入后，展板会按题型显示。点击题目可展开答案，也可以从存档库进入刷题。有人或 AI 从课件整理考点时，可以直接交付这个 JSON，前端排版由软件负责。模板见 [JSON 模板](web/content/review-template.json)。
+
+仓库原有的简答题、名词解释 Markdown 仍可直接导入。普通 Markdown、Word 和 PPT 使用同一套工作台，按章节显示讲义内容。
 
 ## 三、目录
 
@@ -168,7 +185,7 @@ node tools/e2e.mjs longpress   # 鼠标长按选中整句
 
 - 名称为「再捞我一下」，Logo 是被漏勺托起的蓝紫小人。设计说明见 [品牌说明](docs/brand.md)。
 - 解压到固定目录后，可执行 `powershell -NoProfile -ExecutionPolicy Bypass -File tools/create-shortcuts.ps1` 创建桌面和开始菜单快捷方式；之后不要单独移动程序目录。
-- 优先使用程序目录的 `runtime/node/node.exe`，再查系统 Node；两者都没有时沿用便携 Node 下载引导。
+- 优先使用程序目录的 `runtime/node/node.exe`，再查系统 Node；缺失或版本过旧时自动下载便携运行环境。
 - 默认以保留标题栏的普通最大化窗口打开；Edge 已运行时也会补做最大化。
 - 任务栏使用独立应用标识 `ZaiLao.App`，从 12 尺寸 ICO 资源加载图标。
 - `%APPDATA%/fuyan`、`fuyan/archive@1` 和内部 API 保留，旧课程及学习数据继续兼容。

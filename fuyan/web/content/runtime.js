@@ -490,6 +490,10 @@
     goto(id) {
       const el = sectionEl(id);
       if (!el) return false;
+      if (el.classList.contains('workspace-section')) {
+        el.scrollIntoView({ block: 'start', behavior: 'auto' });
+        return true;
+      }
       const y = el.getBoundingClientRect().top + window.scrollY - 8;
       window.scrollTo({ top: Math.max(0, y), behavior: 'auto' });
       return true;
@@ -601,6 +605,8 @@
         while ((n = walker.nextNode())) {
           const i = n.nodeValue.indexOf(q);
           if (i < 0) continue;
+          const card = n.parentElement.closest('details.review-card, .review-card details');
+          if (card && !n.parentElement.closest('summary')) card.open = true;
           const r = doc.createRange();
           r.setStart(n, i);
           r.setEnd(n, i + q.length);

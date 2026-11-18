@@ -1,0 +1,65 @@
+{
+  "schema": "zailao-review@1",
+  "title": "复习资料示例",
+  "sections": [
+    {
+      "type": "single",
+      "questions": [
+        {
+          "stem": "哪一步是在做主动回忆？",
+          "options": ["合上讲义，试着说出要点", "从头浏览同一页讲义", "把讲义标题重新抄一遍"],
+          "answer": "A"
+        }
+      ]
+    },
+    {
+      "type": "multi",
+      "questions": [
+        {
+          "stem": "哪些做法能帮助你发现自己哪里没记住？",
+          "options": ["先闭卷回答", "始终看着答案作答", "答后对照答案"],
+          "answer": ["A", "C"]
+        }
+      ]
+    },
+    {
+      "type": "explain",
+      "questions": [
+        {
+          "stem": "主动回忆",
+          "english": "Active recall",
+          "answer": "不看答案，尝试从记忆中提取学过的内容。"
+        }
+      ]
+    },
+    {
+      "type": "short",
+      "questions": [
+        {
+          "stem": "简述一次考前回顾可以怎么安排。",
+          "answer": "先合上讲义，按目录回忆要点。\n再对照讲义补漏，最后重做错题。",
+          "explanation": "先试着独立说出答案，再展开比对。"
+        }
+      ]
+    },
+    {
+      "type": "case",
+      "questions": [
+        {
+          "caseText": "示例材料：小周连读了三遍讲义，合上后却说不出本章的三个要点。",
+          "stem": "根据这段材料，给出两项调整复习方法的建议。",
+          "answer": "1. 每读完一节，合上讲义写出要点。\n2. 对照原文找漏项，隔一段时间再自测。"
+        }
+      ]
+    },
+    {
+      "type": "fill",
+      "questions": [
+        {
+          "stem": "先____回答，再____核对。",
+          "answer": ["闭卷", "对照资料"]
+        }
+      ]
+    }
+  ]
+}

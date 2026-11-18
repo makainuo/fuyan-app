@@ -3,7 +3,7 @@
 #   # 先登录（只需要一次）：
 #   gh auth login --hostname github.com --git-protocol https
 #
-#   # 打包 + 生成在线存档清单（不联网，只出 dist/）：
+#   # 打包 + 生成在线存档清单（首次下载运行环境，不发布）：
 #   .\tools\publish-github.ps1 -Repo makainuo/fuyan -DryRun
 #
 #   # 真正推送（会建仓库、push、打 Release）：
@@ -13,7 +13,9 @@ param(
   [string]$Repo = "makainuo/zailao-app",
   [string]$Tag = "",
   [switch]$DryRun,
-  [switch]$Private
+  [switch]$PackageOnly,
+  [switch]$Private,
+  [string]$DistDir = ""
 )
 
 $ErrorActionPreference = 'Stop'
@@ -30,18 +32,27 @@ $gh = Find-Gh
 # 版本号
 $ver = (Get-Content (Join-Path $root "version.json") -Raw -Encoding UTF8 | ConvertFrom-Json).version
 if (-not $Tag) { $Tag = "v$ver" }
-$dist = Join-Path $root "dist"
+$dist = if ($DistDir) { [IO.Path]::GetFullPath($DistDir) } else { Join-Path $root "dist" }
 New-Item -ItemType Directory -Force -Path $dist | Out-Null
 
 Write-Host "== 1/5 打包软件 ==" -ForegroundColor Cyan
 $stage = Join-Path $env:TEMP ("fuyan-pack-" + [guid]::NewGuid().ToString("N"))
 New-Item -ItemType Directory -Force -Path $stage | Out-Null
 $items = @("server.js", "lib", "web", "tools", "docs", "assets", "README.md", "package.json",
-           "version.json", "启动再捞我一下.bat", "启动再捞我一下.vbs", "启动再捞我一下.bat", "启动再捞我一下.vbs", ".gitignore", ".gitattributes")
+           "version.json", "启动再捞我一下.bat", "启动再捞我一下.vbs", "启动复研.bat", "启动复研.vbs", ".gitignore", ".gitattributes")
 foreach ($i in $items) {
   $p = Join-Path $root $i
   if (Test-Path -LiteralPath $p) { Copy-Item -LiteralPath $p -Destination $stage -Recurse -Force }
 }
+# Always bundle the verified portable runtime; never copy a machine-specific PATH installation.
+& "$PSHOME\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root 'tools\ensure-node.ps1') -IgnorePath -Auto -Quiet
+if ($LASTEXITCODE -ne 0) { throw 'Cannot package without a portable runtime.' }
+$portableNode = Join-Path $root 'runtime\node\node.exe'
+New-Item -ItemType Directory -Path (Join-Path $stage 'runtime\node') -Force | Out-Null
+foreach ($runtimeFile in @('node.exe', 'LICENSE')) {
+  Copy-Item -LiteralPath (Join-Path $root ('runtime\node\' + $runtimeFile)) -Destination (Join-Path $stage 'runtime\node') -Force
+}
+if (-not (Test-Path -LiteralPath (Join-Path $stage 'runtime\node\node.exe'))) { throw 'Runtime missing from package.' }
 # 不带存档、不带用户数据、不带 node_modules；截图也不进安装包（省体积）
 Remove-Item (Join-Path $stage "data") -Recurse -Force -ErrorAction SilentlyContinue
 Remove-Item (Join-Path $stage "docs\screens") -Recurse -Force -ErrorAction SilentlyContinue
@@ -59,13 +70,16 @@ $leak = $names | Where-Object { $_ -match '(^|/)(data|node_modules)/' -or $_ -ma
 if ($leak) { throw "安装包里发现用户数据，已中止：$($leak -join ', ')" }
 Write-Host "   检查：无批注 / 对话 / 配置等用户数据" -ForegroundColor DarkGray
 
+# Local software packaging does not need the online course catalog.
+if ($PackageOnly) { Write-Host 'Software package ready; nothing was published.'; exit 0 }
+
 Write-Host "== 2/5 生成在线存档清单 ==" -ForegroundColor Cyan
 $env:PYTHONIOENCODING = "utf-8"
-& node (Join-Path $root "tools\make-catalog.mjs") --base "https://cdn.jsdelivr.net/gh/$Repo@master/fuyan/dist" --out $dist
+& $portableNode (Join-Path $root "tools\make-catalog.mjs") --base "https://cdn.jsdelivr.net/gh/$Repo@master/fuyan/dist" --out $dist
 if ($LASTEXITCODE -ne 0) { throw "生成 archives.json 失败" }
 
 if ($DryRun) {
-  Write-Host "`n[DryRun] dist/ 已生成，没有联网。" -ForegroundColor Yellow
+  Write-Host "`n[DryRun] dist/ 已生成，没有提交、推送或发布。" -ForegroundColor Yellow
   Get-ChildItem $dist | Select-Object Name, Length
   exit 0
 }

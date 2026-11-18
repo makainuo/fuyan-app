@@ -8,11 +8,16 @@ import { App } from './app.js';
 
 const TYPES = {
   choice: { label: '选择题', match: (q) => q.type === 'single' || q.type === 'multi' },
+  single: { label: '单选题', match: (q) => q.type === 'single' },
+  multi: { label: '多选题', match: (q) => q.type === 'multi' },
   truefalse: { label: '判断题', match: (q) => q.type === 'truefalse' },
-  fill: { label: '填空题', match: (q) => q.type === 'fill' },
   text: { label: '名解 / 简答', match: (q) => q.type === 'explain' || q.type === 'short' },
+  explain: { label: '名词解释', match: (q) => q.type === 'explain' },
+  short: { label: '简答题', match: (q) => q.type === 'short' },
+  case: { label: '病例分析', match: (q) => q.type === 'case' },
+  fill: { label: '填空题', match: (q) => q.type === 'fill' },
 };
-const QTYPE_LABEL = { single: '单选', multi: '多选', truefalse: '判断', fill: '填空', explain: '名词解释', short: '简答' };
+const QTYPE_LABEL = { single: '单选', multi: '多选', truefalse: '判断', fill: '填空', explain: '名词解释', short: '简答', case: '病例分析' };
 const MODE_LABEL = { seq: '顺序', random: '随机' };
 const PLAY_LABEL = { quick: '快速', normal: '正常', study: '背题' };
 const FILTER_LABEL = { all: '全部', undone: '未做', wrong: '做错', done: '已做', fav: '收藏', hot: '重点', backup: '备选' };
@@ -31,6 +36,13 @@ const saveSoon = debounce(() => saveSession(), 500);
 /* ---------------------------------------------------------------- 数据 */
 function poolFor(type) {
   return questions.filter(TYPES[type].match);
+}
+
+function availableTypes() {
+  const groups = manifest.reviewSchema === 'zailao-review@1'
+    ? ['single', 'multi', 'explain', 'short', 'case', 'fill']
+    : ['choice', 'truefalse', 'fill', 'text', 'case'];
+  return groups.filter((type) => poolFor(type).length);
 }
 
 function applyFilter(list, filter) {
@@ -91,7 +103,7 @@ async function persistSessions() {
 }
 
 /* ---------------------------------------------------------------- 渲染 */
-export async function render(params) {
+export async function render(params, query) {
   archiveId = params.id || state.archiveId;
   const a = await App.loadArchive(archiveId);
   manifest = a.manifest;
@@ -106,14 +118,15 @@ export async function render(params) {
   App.renderSide(manifest, '');
   $('#side').hidden = true;
 
-  const types = Object.keys(TYPES).filter((t) => poolFor(t).length);
+  const types = availableTypes();
   if (!types.length) {
     $('#main').innerHTML = `<div class="wrap"><div class="empty"><div class="big">这个存档没有题库</div></div></div>`;
     return;
   }
   // 优先沿用上次的题型
   const savedTypes = Object.keys(progress.sessions || {});
-  let type = savedTypes.find((t) => types.includes(t)) || types[0];
+  const requested = query?.get('type');
+  const type = (types.includes(requested) && requested) || savedTypes.find((t) => types.includes(t)) || types[0];
   S = (progress.sessions && progress.sessions[type]) || null;
   if (S) S.type = type;
 
@@ -164,7 +177,7 @@ function bindShell() {
       $$('#q-types .chip').forEach((x) => x.classList.toggle('on', x === b));
       S = (progress.sessions && progress.sessions[type]) || null;
       if (S) S.type = type;
-      const types = Object.keys(TYPES).filter((t) => poolFor(t).length);
+      const types = availableTypes();
       if (S && S.order && S.order.length) {
         startTs = Date.now();
         if (S.done) renderDone();
@@ -179,13 +192,16 @@ function bindShell() {
     openPanel();
   };
   $('#q-reset').onclick = async () => {
-    if (!S) return renderStart(Object.keys(TYPES).filter((t) => poolFor(t).length), Object.keys(TYPES).filter((t) => poolFor(t).length)[0]);
+    if (!S) {
+      const types = availableTypes();
+      return renderStart(types, types[0]);
+    }
     const ok = await confirmDialog('重设这一轮？', '会清掉当前进度（答题记录保留），回到开始页重新选范围和模式。', { okText: '重设' });
     if (!ok) return;
     delete progress.sessions[S.type];
     S = null;
     await persistSessions();
-    const types = Object.keys(TYPES).filter((t) => poolFor(t).length);
+    const types = availableTypes();
     renderStart(types, types[0]);
   };
   $('#q-wrong').onclick = async () => {
@@ -218,7 +234,7 @@ function bindShell() {
     delete progress.sessions[S.type];
     S = null;
     saveSession();
-    const types = Object.keys(TYPES).filter((t) => poolFor(t).length);
+    const types = availableTypes();
     renderStart(types, types[0]);
     toast('已清除', 'ok');
   };
@@ -228,6 +244,7 @@ function bindShell() {
 
 /* ---------------------------------------------------------------- 开始页 */
 function renderStart(types, type) {
+  $$('#q-types .chip').forEach((chip) => chip.classList.toggle('on', chip.dataset.type === type));
   const list = poolFor(type);
   const undone = applyFilter(list, 'undone').length;
   const wrong = applyFilter(list, 'wrong').length;
@@ -391,6 +408,7 @@ function renderQuestion() {
       <button class="btn sm" id="q-fav" title="收藏">${fav ? '★' : '☆'}</button>
     </div>
     ${q.stemEn ? `<div class="qstem-en">${esc(q.stemEn)}</div>` : ''}
+    ${q.caseText ? `<div class="explain qcase"><div class="h">病例资料</div>${esc(q.caseText)}</div>` : ''}
     <div class="qstem">${esc(q.stem)}</div>
     ${optsHtml}
     ${q.type === 'multi' && !showAnswer ? `<div style="margin-top:16px"><button class="btn primary" id="submit-multi" ${Array.isArray(ans) && ans.length ? '' : 'disabled'}>提交答案</button></div>` : ''}

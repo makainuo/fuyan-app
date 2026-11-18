@@ -64,16 +64,15 @@ export async function render() {
       </div>
       <div class="convert-txt">
         <b>存档转化</b>
-        <span>Word / PPT / Markdown → 存档，自动放进存档库</span>
+        <span>导入 JSON 题库，或将 Word、PPT、Markdown 转为讲义。资料统一在复习工作台中打开。</span>
+        <a href="/content/review-template.json" download="复习资料模板.json">下载 JSON 模板</a>
       </div>
       <button class="btn primary" id="btn-convert">选择文件</button>
     </div>
     <div id="online-catalog"></div>
     ${archives.length ? `<div class="lib-grid">${archives.map(card).join('')}</div>`
       : `<div class="lib-empty"><div class="big">还没有存档</div>
-         <p>点「导入存档包」选一个 <code>.zip</code>，或从夸克网盘「dsh传输」里拉一份。</p></div>`}
-    <p class="muted small" style="margin-top:26px">存档格式 <code>fuyan/archive@1</code>：<code>manifest.json</code> + <code>content.html</code> + <code>questions.json</code>。
-      换课程只需要换存档，软件本身不用改。</p>
+         <p>选择一份复习资料，或导入已有的课程存档包。</p></div>`}
   </div>`;
 
   main.querySelectorAll('[data-import]').forEach((b) => {
@@ -88,7 +87,8 @@ export async function render() {
       try {
         const r = await api.convertPick();
         if (r.canceled) return;
-        toast(`已生成「${r.title}」：${r.sections} 节${r.images ? ' · ' + r.images + ' 张图' : ''}`, 'ok', 3000);
+        const count = r.questionCount ? `${r.questionCount} 道题` : `${r.sections} 节${r.images ? ' · ' + r.images + ' 张图' : ''}`;
+        toast(`已生成「${r.title}」，共 ${count}`, 'ok', 3000);
         await App.reloadArchives();
         App.go('#/read/' + encodeURIComponent(r.id));
       } catch (e) {

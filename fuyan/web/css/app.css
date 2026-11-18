@@ -266,6 +266,7 @@ body.reading .main{height:calc(100vh - var(--top-h))}
 .qcard .qmeta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;font-size:12px;color:var(--muted)}
 .qstem{font-family:var(--serif);font-size:19px;line-height:1.75;margin:0 0 6px;white-space:pre-wrap}
 .qstem-en{font-family:var(--serif);font-size:14px;color:var(--muted);margin:6px 0 0;font-style:italic}
+.explain.qcase{margin-bottom:14px}
 .opts{margin-top:20px;display:flex;flex-direction:column;gap:9px}
 .opt{display:flex;gap:12px;align-items:flex-start;padding:12px 15px;border:1px solid var(--line);border-radius:11px;background:var(--panel);cursor:pointer;
   transition:.15s;text-align:left;font-size:15.5px;font-family:var(--serif);line-height:1.6;color:var(--ink)}

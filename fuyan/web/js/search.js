@@ -31,7 +31,7 @@ function buildIndex() {
       id: q.id,
       qid: q.id,
       title: (q.stem || '').slice(0, 70),
-      text: [q.stem, q.stemEn, (q.options || []).map((o) => o.zh + ' ' + (o.en || '')).join(' '), q.explain, q.topic, (q.tags || []).join(' ')].join(' '),
+      text: [q.stem, q.stemEn, q.caseText, (q.options || []).map((o) => o.zh + ' ' + (o.en || '')).join(' '), (q.answerText || []).join(' '), q.explain, q.topic, (q.tags || []).join(' ')].join(' '),
       q,
     });
   }
@@ -128,9 +128,10 @@ function showQuestion(q) {
   const letters = (q.answer || []).map((i) => String.fromCharCode(65 + i)).join('');
   openModal(
     `<h3>题目预览</h3><p class="sub">${esc(q.topic || '')} · ${(q.tags || []).join(' / ')}</p>
+     ${q.caseText ? `<div class="explain"><div class="h">病例资料</div>${esc(q.caseText)}</div>` : ''}
      <div class="quote" style="border-left-color:var(--accent)">${esc(q.stem)}</div>
      ${(q.options || []).map((o, i) => `<div style="padding:4px 0;font-family:var(--serif)">${String.fromCharCode(65 + i)}. ${esc(o.zh)}${(q.answer || []).includes(i) ? ' <span class="tag ok">答案</span>' : ''}</div>`).join('')}
-     <p class="small" style="margin-top:10px"><b>答案：</b>${esc(letters)}</p>
+     <p class="small" style="margin-top:10px;white-space:pre-wrap"><b>答案：</b>${esc(letters || (q.answerText || []).join('；'))}</p>
      ${q.explain ? `<div class="explain"><div class="h">解析</div>${esc(q.explain)}</div>` : ''}
      <div class="foot"><button class="btn" data-q="close">关闭</button></div>`,
     {
