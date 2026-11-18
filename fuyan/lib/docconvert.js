@@ -2,7 +2,7 @@
 
 /**
  * 文档 → 存档（零依赖，用 Node 自带的 zlib）
- * 支持 .docx / .pptx / .md / .markdown / .txt
+ * 支持 Word、PPT、Markdown、纯文本、HTML 和结构化 JSON
  *
  * 产出：<DATA_DIR>/converted/<id>/ + <id>.zip
  * 然后调用 archive.importArchive 放进存档库。
@@ -13,7 +13,9 @@ const path = require('path');
 const zlib = require('zlib');
 const store = require('./store');
 const archiveLib = require('./archive');
-const { parseReview, parseReviewJson, renderReview, renderWorkspace } = require('./review');
+const { parseReviewJson, buildDetectedReview, renderReview, renderWorkspace } = require('./review');
+const { detectQuestions } = require('./detect-questions');
+const { readHtml } = require('./html-import');
 
 /* ---------------------------------------------------------------- ZIP 读 */
 
@@ -224,7 +226,7 @@ function resolveEntry(base, target) {
   return stack.join('/');
 }
 
-function docxPara(xml, styles, rels, model, cur, zip, folder) {
+function docxPara(xml, styles, rels, model, cur, zip, folder, numbering) {
   const st = /<w:pStyle[^>]*w:val="([^"]+)"/.exec(xml);
   let level = 0;
   if (st) {
@@ -255,6 +257,14 @@ function docxPara(xml, styles, rels, model, cur, zip, folder) {
     if (src) { cur.blocks.push({ type: 'img', src }); imgAdded = true; }
   }
   if (html.trim()) {
+    const numId = /<w:numId[^>]*w:val="(\d+)"/.exec(xml)?.[1];
+    const level = /<w:ilvl[^>]*w:val="(\d+)"/.exec(xml)?.[1] || '0';
+    if (level === '0' && numbering.has(numId)) {
+      const number = numbering.get(numId);
+      numbering.set(numId, number + 1);
+      cur.blocks.push({ type: 'p', html: number + '. ' + html });
+      return;
+    }
     const styleName = st ? styles.get(st[1]) || '' : '';
     const isList = /<w:numPr[\s>]/.test(xml) || /list|bullet|列表/i.test(styleName);
     if (isList) {
@@ -274,9 +284,11 @@ function runsHtml(xml) {
   const re = /<w:r(?=[\s>])[\s\S]*?<\/w:r>/g;
   let m;
   while ((m = re.exec(xml))) {
-    const t = allText(m[0], 'w:t');
-    if (!t) continue;
-    let h = esc(t);
+    let h = '';
+    for (const [, text] of m[0].matchAll(/<w:t(?:\s[^>]*)?>([\s\S]*?)<\/w:t>|<w:(?:br|cr)(?=[\s/])/g)) {
+      h += text === undefined ? '<br>' : esc(decode(text));
+    }
+    if (!h) continue;
     const b = /<w:b(?=[\s/>])/.test(m[0]) && !/w:val="0"/.test(m[0]);
     const i = /<w:i(?=[\s/>])/.test(m[0]) && !/w:val="0"/.test(m[0]);
     if (b) h = '<strong>' + h + '</strong>';
@@ -284,6 +296,22 @@ function runsHtml(xml) {
     out.push(h);
   }
   return out.join('');
+}
+
+function decimalNumbering(xml) {
+  const abstractIds = new Map();
+  for (const [, id, spec] of xml.matchAll(/<w:abstractNum\s[^>]*w:abstractNumId="(\d+)"[^>]*>([\s\S]*?)<\/w:abstractNum>/g)) {
+    const first = /<w:lvl\s[^>]*w:ilvl="0"[^>]*>([\s\S]*?)<\/w:lvl>/.exec(spec)?.[1];
+    if (first && /<w:numFmt\s[^>]*w:val="decimal"/.test(first)) {
+      abstractIds.set(id, Number(/<w:start\s[^>]*w:val="(\d+)"/.exec(first)?.[1] || 1));
+    }
+  }
+  const result = new Map();
+  for (const [, id, spec] of xml.matchAll(/<w:num\s[^>]*w:numId="(\d+)"[^>]*>([\s\S]*?)<\/w:num>/g)) {
+    const abstract = /<w:abstractNumId\s[^>]*w:val="(\d+)"/.exec(spec)?.[1];
+    if (abstractIds.has(abstract)) result.set(id, abstractIds.get(abstract));
+  }
+  return result;
 }
 
 function docxTable(xml) {
@@ -306,6 +334,7 @@ function parseDocx(file, folder, model) {
   if (!doc) throw new Error('docx 里找不到 word/document.xml');
   const styles = parseStyles(zip.read('word/styles.xml'));
   const rels = parseRels(zip.read('word/_rels/document.xml.rels'));
+  const numbering = decimalNumbering(zip.read('word/numbering.xml')?.toString('utf8') || '');
   const xml = doc.toString('utf8');
   const b0 = xml.indexOf('<w:body');
   const b1 = xml.lastIndexOf('</w:body>');
@@ -331,7 +360,7 @@ function parseDocx(file, folder, model) {
     } else if (np >= 0) {
       const end = body.indexOf('</w:p>', np);
       if (end < 0) break;
-      docxPara(body.slice(np, end), styles, rels, model, cur, zip, folder);
+      docxPara(body.slice(np, end), styles, rels, model, cur, zip, folder, numbering);
       if (model.sections.length) cur = model.sections[model.sections.length - 1];
       pos = end + 6;
     } else break;
@@ -413,7 +442,8 @@ function mdInline(s) {
     .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
 }
 function parseMd(source, model) {
-  const lines = source.replace(/\r\n/g, '\n').split('\n');
+  const lines = source.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n')
+    .replace(/^---[ \t]*\n[\s\S]*?\n---[ \t]*(?:\n|$)/, '').split('\n');
   let cur = newSection(model, '');
   let i = 0;
   while (i < lines.length) {
@@ -470,12 +500,26 @@ function blockHtml(b) {
   return '';
 }
 
-function renderHtml(model, title, id) {
-  const sections = model.sections.map((section) => ({
+function proseSections(sections) {
+  return sections.map((section) => ({
     ...section,
     body: '<div class="workspace-prose">' + section.blocks.map(blockHtml).join('\n') + '</div>',
   }));
-  return renderWorkspace({ title, id, sections, esc });
+}
+
+function officeText(sections) {
+  const plain = (html) => decode(html.replace(/<br\s*\/?\s*>/g, '\n').replace(/<[^>]+>/g, ''));
+  return sections.flatMap((section) => [
+    '# ' + section.title,
+    ...section.blocks.flatMap((block) => {
+      if (block.type === 'h') return ['## ' + block.text];
+      if (block.type === 'p') return [plain(block.html)];
+      if (block.type === 'ol') return block.items.map((item, index) => (index + 1) + '. ' + plain(item));
+      if (block.type === 'ul') return block.items.map(plain);
+      if (block.type === 'table') return block.rows.map((row) => '| ' + row.join(' | ') + ' |');
+      return [];
+    }),
+  ]).join('\n');
 }
 
 /* ---------------------------------------------------------------- 主流程 */
@@ -488,16 +532,21 @@ async function convertAndImport(input, opts = {}) {
   const ext = path.extname(input).toLowerCase();
   if (!fs.existsSync(input)) throw new Error('找不到文件：' + input);
   if (ext === '.pdf') throw new Error('PDF 暂不支持：建议先用 Word 打开并另存为 .docx。');
-  if (!['.json', '.docx', '.pptx', '.md', '.markdown', '.txt'].includes(ext)) {
-    throw new Error('不支持的格式：' + ext + '（支持 .json / .docx / .pptx / .md / .txt）');
+  if (!['.json', '.docx', '.pptx', '.md', '.markdown', '.txt', '.html', '.htm'].includes(ext)) {
+    throw new Error('不支持的格式：' + ext + '（支持 Word、PPT、Markdown、纯文本、HTML 和 JSON）');
   }
 
-  const markdown = ['.md', '.markdown', '.txt'].includes(ext) ? fs.readFileSync(input, 'utf8') : null;
-  const review = ext === '.json' ? parseReviewJson(fs.readFileSync(input, 'utf8'))
-    : markdown === null ? null : parseReview(markdown);
+  const filename = path.basename(input, path.extname(input));
+  const htmlSource = ['.html', '.htm'].includes(ext) ? readHtml(fs.readFileSync(input, 'utf8')) : null;
+  const markdown = ['.md', '.markdown', '.txt'].includes(ext) ? fs.readFileSync(input, 'utf8') : htmlSource?.markdown ?? null;
+  let review = ext === '.json' ? parseReviewJson(fs.readFileSync(input, 'utf8')) : null;
+  if (htmlSource?.study) review = parseReviewJson(JSON.stringify({ schema: 'zailao-review@1', title: htmlSource.title || filename, ...htmlSource.study }));
+  if (htmlSource && !review && !markdown) throw new Error('这个网页没有可读取的正文，请试试导出为 Word 或纯文本。');
   const id = opts.id || safeId();
   if (!/^[A-Za-z0-9_-][A-Za-z0-9._-]{0,63}$/.test(id) || id.endsWith('.')) throw new Error('无效的存档 ID');
-  const title = opts.title || review?.title || path.basename(input, path.extname(input));
+  const frontMatter = /^(?:\uFEFF)?---[ \t]*\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/.exec(markdown || '')?.[1];
+  const mdTitle = frontMatter?.match(/^title:[ \t]*(.+)$/m)?.[1]?.trim().replace(/^(['"])(.*)\1$/, '$2');
+  const title = opts.title || review?.title || htmlSource?.title || mdTitle || filename;
   const base = path.join(store.DATA_DIR, 'converted');
   const folder = path.join(base, id);
   if (path.dirname(path.resolve(folder)) !== path.resolve(base)) throw new Error('无效的转换目录');
@@ -505,22 +554,29 @@ async function convertAndImport(input, opts = {}) {
   fs.mkdirSync(folder, { recursive: true });
 
   const model = { sections: [], images: 0 };
-  if (review) model.sections = review.sections;
-  else {
+  const original = [];
+  if (!review) {
     if (ext === '.docx') parseDocx(input, folder, model);
     else if (ext === '.pptx') parsePptx(input, folder, model);
     else parseMd(markdown, model);
     model.sections = model.sections.filter((s) => s.blocks.length > 0);
+    review = buildDetectedReview(detectQuestions(markdown ?? officeText(model.sections)), title);
+    if (review) original.push(...model.sections);
   }
 
+  if (review) model.sections = review.sections;
   if (!model.sections.length && !review?.notes?.length) model.sections.push({ id: 's1', title, blocks: [] });
   model.sections.forEach((s, i) => {
     s.id = 's' + (i + 1);
     if (!s.title) s.title = title;
   });
+  original.forEach((section, i) => {
+    section.id = 'source-' + (i + 1);
+    if (!section.title || /^第 \d+ 节$/.test(section.title)) section.title = original.length === 1 ? '导入原文' : '原文第 ' + (i + 1) + ' 节';
+  });
 
   const nav = [];
-  for (const [group, sections] of [['讲义', review?.notes || []], [review ? '题库' : '内容', model.sections]]) {
+  for (const [group, sections] of [['讲义', review?.notes || []], [review ? '题库' : '内容', model.sections], ['导入原文', original]]) {
     if (!sections.length) continue;
     nav.push({ group }, ...sections.map((s, i) => ({
       anchor: s.id, title: s.title, badge: String(i + 1).padStart(2, '0'), sectionId: s.id, count: s.questions?.length,
@@ -542,7 +598,9 @@ async function convertAndImport(input, opts = {}) {
     source: { kind: 'local', file: path.basename(input) },
   };
   fs.writeFileSync(path.join(folder, 'manifest.json'), JSON.stringify(manifest, null, 1), 'utf8');
-  fs.writeFileSync(path.join(folder, 'content.html'), review ? renderReview(review, title, id, esc) : renderHtml(model, title, id), 'utf8');
+  const html = review ? renderReview(review, title, id, esc, proseSections(original))
+    : renderWorkspace({ title, id, sections: proseSections(model.sections), esc });
+  fs.writeFileSync(path.join(folder, 'content.html'), html, 'utf8');
   if (review) fs.writeFileSync(path.join(folder, 'questions.json'), JSON.stringify({ count: questions.length, questions }, null, 2), 'utf8');
 
   const files = [];
@@ -565,9 +623,10 @@ async function convertAndImport(input, opts = {}) {
     title,
     zip,
     folder,
-    sections: model.sections.length + (review?.notes?.length || 0),
+    sections: model.sections.length + (review?.notes?.length || 0) + original.length,
     images: model.images,
-    questionCount: questions.length,
+    questionCount: review?.detectedCount ?? questions.length,
+    practiceCount: questions.length,
     imported: true,
     manifest: imported.manifest,
   };

@@ -183,7 +183,7 @@ const api = {
   },
 
   async convertPick(req, res) {
-    const picked = await winps.pickFile('选择复习资料或讲义', '支持的文件 (*.json;*.docx;*.pptx;*.md;*.markdown;*.txt)|*.json;*.docx;*.pptx;*.md;*.markdown;*.txt|所有文件 (*.*)|*.*');
+    const picked = await winps.pickFile('选择复习资料', '支持的文件 (*.docx;*.pptx;*.md;*.txt;*.html;*.json)|*.docx;*.pptx;*.md;*.markdown;*.txt;*.html;*.htm;*.json|所有文件 (*.*)|*.*');
     if (!picked) return send(res, 200, { ok: false, canceled: true });
     const r = await docconvert.convertAndImport(picked);
     send(res, 200, r);

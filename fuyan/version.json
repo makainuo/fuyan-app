@@ -1,6 +1,6 @@
 {
-  "version": "0.1.6",
-  "update": 7,
-  "notes": "新增统一复习工作台和六种题型的 JSON 导入。Windows x64 便携包内置运行环境，解压后双击启动。",
-  "url": "https://github.com/makainuo/zailao-app/releases/download/v0.1.6/zailao-v0.1.6.zip"
+  "version": "0.1.7",
+  "update": 8,
+  "notes": "可直接导入 Word、PPT、Markdown、纯文本和 HTML。软件自动识别题目，按题型展示，并保留讲义或原文。",
+  "url": "https://github.com/makainuo/zailao-app/releases/download/v0.1.7/zailao-v0.1.7.zip"
 }

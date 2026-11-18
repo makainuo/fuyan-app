@@ -6,13 +6,13 @@ const types = new Map([
   ['简答题', 'short'], ['简答', 'short'], ['问答', 'short'], ['问答题', 'short'],
   ['名词解释', 'explain'], ['名词解释题', 'explain'], ['名解', 'explain'],
 ]);
-const labels = { single: '单选题', multi: '多选题', explain: '名词解释', short: '简答题', case: '病例分析', fill: '填空题' };
+const labels = { single: '单选题', multi: '多选题', explain: '名词解释', short: '简答题', case: '病例分析', fill: '填空题', truefalse: '判断题' };
 const heading = /^#{1,6}\s+(.+?)\s*#*$/;
 const separator = /^\s*---\s*$/;
 const number = /^\s*(\d+)[.．、)）]\s*(\S.*)$/;
 const field = /^\s*(正确答案|参考答案|答案|解析|英文)\s*[:：]\s*(.*)$/;
 
-function addQuestion(section, { stem, answer, english, explanation, options, correct, caseText, topic, source }, occurrence) {
+function addQuestion(section, { stem, answer, english, explanation, options, correct, caseText, topic, source, originalAnswer }, occurrence) {
   const key = section.type + '\n' + stem.replace(/\s+/g, ' ');
   const count = (occurrence.get(key) || 0) + 1;
   occurrence.set(key, count);
@@ -23,12 +23,28 @@ function addQuestion(section, { stem, answer, english, explanation, options, cor
     topic: topic || section.title,
     stem,
     stemEn: english,
-    answerText: Array.isArray(answer) ? answer : [answer],
+    answerText: Array.isArray(answer) ? answer : answer ? [answer] : [],
     explain: explanation,
     ...(options ? { options, answer: correct } : {}),
     ...(caseText ? { caseText } : {}),
     ...(source ? { source } : {}),
+    ...(originalAnswer ? { originalAnswer } : {}),
   });
+}
+
+function buildDetectedReview(detected, title) {
+  if (!detected.length) return null;
+  const occurrence = new Map();
+  const sections = Object.entries(labels).flatMap(([type, label]) => {
+    const matches = detected.filter((question) => question.type === type);
+    if (!matches.length) return [];
+    const section = { title: label, type, questions: [] };
+    for (const question of matches) addQuestion(section, question, occurrence);
+    return [section];
+  });
+  // Questions without a reliable answer can be read in the workspace.
+  const questions = sections.flatMap((section) => section.questions.filter((q) => q.answerText.length));
+  return { title, schema: 'zailao-review@1', sections, questions, detectedCount: detected.length };
 }
 
 function parseReviewJson(source) {
@@ -76,7 +92,7 @@ function parseReviewJson(source) {
   const sections = data.sections.flatMap((entry, index) => {
     const location = '第 ' + (index + 1) + ' 个区块';
     const type = entry?.type;
-    if (typeof type !== 'string' || !Object.hasOwn(labels, type)) throw new Error(location + '的 type 必须是 single、multi、explain、short、case 或 fill。');
+    if (typeof type !== 'string' || !Object.hasOwn(labels, type) || type === 'truefalse') throw new Error(location + '的 type 必须是 single、multi、explain、short、case 或 fill。');
     if (!Array.isArray(entry.questions)) throw new Error(location + '的 questions 必须是数组。');
     if (!entry.questions.length) return [];
     const section = { id: 's' + (index + 1), title: labels[type], type, questions: [] };
@@ -182,7 +198,7 @@ function parseReview(source) {
   return { title: title?.replace(/^(['"])(.*)\1$/, '$2'), sections, questions: sections.flatMap((s) => s.questions) };
 }
 
-function renderReview(review, title, id, esc) {
+function renderReview(review, title, id, esc, originalSections = []) {
   const notes = (review.notes || []).map((note) => ({
     ...note,
     body: '<div class="workspace-prose">' + note.blocks.map((block) => {
@@ -195,7 +211,10 @@ function renderReview(review, title, id, esc) {
     }).join('') + '</div>',
   }));
   const sections = review.sections.map((section) => {
-    const cards = section.questions.map((q, i) => `
+    const cards = section.questions.map((q, i) => {
+      const answer = q.type === 'truefalse' && q.answerText.length
+        ? (q.answerText[0] === 'true' ? '正确' : '错误') : q.answerText.join('；');
+      return `
       <article class="review-card">
         ${q.caseText ? `<p class="review-case">${esc(q.caseText)}</p>` : ''}
         <h3 id="${q.id}"><span>${i + 1}.</span> ${esc(q.stem)}</h3>
@@ -204,23 +223,27 @@ function renderReview(review, title, id, esc) {
           <summary>参考答案</summary>
           <div class="review-answer">
           ${q.stemEn ? `<p class="review-term" lang="en">${esc(q.stemEn)}</p>` : ''}
-          <p>${esc(q.answerText.join('；'))}</p>
+          <p>${esc(answer || (q.originalAnswer ? '原文答案（未用于自动判分）\n' + q.originalAnswer : '原文未附可确认的答案。'))}</p>
           ${q.explain ? `<p class="review-label">解析</p><p>${esc(q.explain)}</p>` : ''}
           ${q.source ? `<p class="review-label">来源</p><p>${esc(q.source)}</p>` : ''}
           </div>
         </details>
-      </article>`).join('\n');
+      </article>`;
+    }).join('\n');
     return {
       ...section,
       count: section.questions.length,
-      quizType: review.schema ? section.type : 'text',
+      quizType: section.questions.some((q) => q.answerText.length) ? (review.schema ? section.type : 'text') : '',
       body: cards,
     };
   });
-  return renderWorkspace({ title, id, sections: notes.concat(sections), questionCount: review.questions.length, esc });
+  return renderWorkspace({
+    title, id, sections: notes.concat(sections, originalSections), questionCount: review.detectedCount ?? review.questions.length,
+    practiceCount: review.questions.length, esc,
+  });
 }
 
-function renderWorkspace({ title, id, sections, questionCount = 0, esc }) {
+function renderWorkspace({ title, id, sections, questionCount = 0, practiceCount = questionCount, esc }) {
   const quizUrl = '/#/quiz/' + encodeURIComponent(id);
   const sectionLinks = sections.map((section) =>
     `<a href="#${esc(section.id)}">${esc(section.title)}${section.count ? `<span>${section.count}</span>` : ''}</a>`).join('');
@@ -237,8 +260,8 @@ function renderWorkspace({ title, id, sections, questionCount = 0, esc }) {
 <title>${esc(title)}</title><link rel="stylesheet" href="/content/review.css"></head>
 <body class="review-board"><main>
   <header class="workspace-cover">
-    <div><h1 class="review-title">${esc(title)}</h1><p>${[sections.some((s) => !s.quizType) ? sections.filter((s) => !s.quizType).length + ' 个讲义章节' : '', questionCount ? questionCount.toLocaleString('zh-CN') + ' 道题' : ''].filter(Boolean).join(' · ')}</p></div>
-    ${questionCount ? `<a class="workspace-start" href="${quizUrl}" target="_top">开始刷题 <span aria-hidden="true">→</span></a>` : ''}
+    <div><h1 class="review-title">${esc(title)}</h1><p>${[sections.some((s) => !s.count) ? sections.filter((s) => !s.count).length + ' 个讲义章节' : '', questionCount ? questionCount.toLocaleString('zh-CN') + ' 道题' : ''].filter(Boolean).join(' · ')}</p></div>
+    ${practiceCount ? `<a class="workspace-start" href="${quizUrl}" target="_top">开始刷题 <span aria-hidden="true">→</span></a>` : ''}
   </header>
   <div class="workspace-tools">
     <nav class="workspace-jumps" aria-label="章节与题型">${sectionLinks}</nav>
@@ -251,4 +274,4 @@ function renderWorkspace({ title, id, sections, questionCount = 0, esc }) {
 </main></body></html>`;
 }
 
-module.exports = { parseReview, parseReviewJson, renderReview, renderWorkspace };
+module.exports = { parseReview, parseReviewJson, buildDetectedReview, renderReview, renderWorkspace };

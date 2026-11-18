@@ -63,9 +63,8 @@ export async function render() {
         </svg>
       </div>
       <div class="convert-txt">
-        <b>存档转化</b>
-        <span>导入 JSON 题库，或将 Word、PPT、Markdown 转为讲义。资料统一在复习工作台中打开。</span>
-        <a href="/content/review-template.json" download="复习资料模板.json">下载 JSON 模板</a>
+        <b>导入资料</b>
+        <span>选择你的讲义或题库。识别出的题目会单独展示，原文也能继续阅读。</span>
       </div>
       <button class="btn primary" id="btn-convert">选择文件</button>
     </div>
@@ -83,12 +82,14 @@ export async function render() {
     btnConvert.onclick = async () => {
       const old = btnConvert.textContent;
       btnConvert.disabled = true;
-      btnConvert.textContent = '转化中…';
+      btnConvert.textContent = '正在识别资料…';
       try {
         const r = await api.convertPick();
         if (r.canceled) return;
-        const count = r.questionCount ? `${r.questionCount} 道题` : `${r.sections} 节${r.images ? ' · ' + r.images + ' 张图' : ''}`;
-        toast(`已生成「${r.title}」，共 ${count}`, 'ok', 3000);
+        const count = r.questionCount
+          ? `识别出 ${r.questionCount} 道题${r.practiceCount < r.questionCount ? `，其中 ${r.practiceCount} 道可判分或对照答案` : ''}`
+          : '已导入为讲义';
+        toast(`「${r.title}」${count}`, 'ok', 4000);
         await App.reloadArchives();
         App.go('#/read/' + encodeURIComponent(r.id));
       } catch (e) {

@@ -40,7 +40,7 @@ function poolFor(type) {
 
 function availableTypes() {
   const groups = manifest.reviewSchema === 'zailao-review@1'
-    ? ['single', 'multi', 'explain', 'short', 'case', 'fill']
+    ? ['single', 'multi', 'explain', 'short', 'case', 'fill', 'truefalse']
     : ['choice', 'truefalse', 'fill', 'text', 'case'];
   return groups.filter((type) => poolFor(type).length);
 }
