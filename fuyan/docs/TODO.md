@@ -58,7 +58,7 @@
   - [ ] 设置页填 `update.manifestUrl`，或直接在 `lib/update.js` 里写死两个源
   - [ ] 「落后 N 个更新」徽标（好友 App 的样式）放到顶栏
   - [ ] 下载页跳转（现在只有检查，没有下载按钮）
-- [ ] **自动更新**：下载安装包 → 校验 → 静默替换 → 重启。建议用 electron-updater（打包后再说）。
+- [x] **Windows 软件内更新**：下载正式完整包，按 GitHub Releases 的 SHA-256 校验，用户确认重启后替换程序。启动校验失败时恢复旧版。
 - [~] **存档更新提醒**：网盘渠道已做（大小/时间比对）；GitHub 渠道还差「清单 version > 本地 version」的提示。
 - [ ] **存档更新提醒（GitHub）**：`archives.json` 里已有 `version`，首页拿它和本地比较即可。
 

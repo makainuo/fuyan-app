@@ -84,7 +84,8 @@ export async function render() {
         <div class="kv"><b>当前版本</b><span id="up-local">—</span></div>
         <div class="kv"><b>检查结果</b><span id="up-state">未检查</span></div>
         <div class="btns"><button class="btn primary" id="up-save">保存</button>
-          <button class="btn" id="up-check">检查更新</button></div>
+          <button class="btn" id="up-check">检查更新</button>
+          <button class="btn primary" id="up-open" hidden>查看更新</button></div>
       </div>
 
       <div class="card">
@@ -210,6 +211,9 @@ function bindQuark() {
 
 function bindUpdate() {
   const draw = (r) => {
+    const open = $('#up-open');
+    open.hidden = !r.hasUpdate;
+    open.onclick = () => App.openUpdateBox(r);
     $('#up-local').textContent = `${(r.local && r.local.version) || '?'}（update ${(r.local && r.local.update) || 0}）`;
     if (!r.ok) {
       $('#up-state').innerHTML = `<span class="status-dot bad"></span> ${esc(r.message || '检查失败')}`;

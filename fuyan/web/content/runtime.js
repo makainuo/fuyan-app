@@ -161,6 +161,8 @@
     renderNotes();
     const r = rangeOf(it.anchor.start, it.anchor.end);
     if (!r) return false;
+    const target = r.startContainer;
+    activateCourseView(target.nodeType === 1 ? target : target.parentElement);
     const rect = r.getBoundingClientRect();
     const y = rect.top + window.scrollY - window.innerHeight * 0.35;
     window.scrollTo({ top: Math.max(0, y), behavior: 'auto' });
@@ -447,13 +449,24 @@
     return doc.getElementById(id) || doc.querySelector(`[data-section="${id}"]`);
   }
 
+  function activateCourseView(element) {
+    if (!element) return;
+    const view = element.closest('[data-course-view]');
+    if (!view) return;
+    const wasHidden = view.hidden;
+    doc.querySelectorAll('[data-course-view]').forEach((panel) => {
+      panel.hidden = panel !== view;
+    });
+    if (wasHidden) hostCall('onSectionChange', view.dataset.courseView);
+  }
+
   function currentSection() {
     if (!state.sections.length) return '';
     const top = window.scrollY + 110;
     let cur = state.sections[0].id;
     for (const s of state.sections) {
       const el = sectionEl(s.id);
-      if (!el) continue;
+      if (!el || el.closest('[data-course-view][hidden]')) continue;
       const y = el.getBoundingClientRect().top + window.scrollY;
       if (y <= top) cur = s.id;
     }
@@ -487,9 +500,16 @@
 
   /* -------------------------------------------------------------- 对外 API */
   const api = {
+    selectCourseSection(id) {
+      const element = sectionEl(id) || doc.querySelector('[data-course-view]');
+      if (!element?.closest('[data-course-view]')) return '';
+      activateCourseView(element);
+      return element.id;
+    },
     goto(id) {
       const el = sectionEl(id);
       if (!el) return false;
+      activateCourseView(el);
       if (el.classList.contains('workspace-section')) {
         el.scrollIntoView({ block: 'start', behavior: 'auto' });
         return true;
@@ -501,6 +521,7 @@
     gotoElement(id) {
       const el = doc.getElementById(id);
       if (!el) return false;
+      activateCourseView(el);
       el.scrollIntoView({ block: 'start', behavior: 'auto' });
       el.classList.add('fy-flash');
       setTimeout(() => el.classList.remove('fy-flash'), 1600);
@@ -610,6 +631,7 @@
           const r = doc.createRange();
           r.setStart(n, i);
           r.setEnd(n, i + q.length);
+          activateCourseView(n.parentElement);
           const rect = r.getBoundingClientRect();
           window.scrollTo({ top: Math.max(0, rect.top + window.scrollY - window.innerHeight * 0.3) });
           return true;

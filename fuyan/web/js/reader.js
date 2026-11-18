@@ -137,7 +137,10 @@ export async function render(params, query) {
     const wantQ = query.get('q');
     const wantNote = query.get('note');
     const read = state.progress.read || {};
-    const target = wantEl || wantQ ? 0 : Math.max(0, read.scrollY || 0);
+    const selected = fy.api.selectCourseSection?.(wantSection);
+    if (selected) App.markSideActive(selected);
+    const savedY = selected ? 0 : read.scrollY;
+    const target = wantEl || wantQ ? 0 : Math.max(0, savedY || 0);
     let tries = 0;
     let shown = false;
     const show = () => {

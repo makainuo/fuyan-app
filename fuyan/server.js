@@ -15,6 +15,7 @@ const archiveLib = require('./lib/archive');
 const ai = require('./lib/ai');
 const quark = require('./lib/quark');
 const updateLib = require('./lib/update');
+const updater = require('./lib/install-update');
 const winps = require('./lib/winps');
 const docconvert = require('./lib/docconvert');
 
@@ -58,6 +59,13 @@ function send(res, status, obj, extraHeaders) {
 
 function fail(res, status, message, extra) {
   send(res, status, { ok: false, error: String(message || '未知错误'), ...(extra || {}) });
+}
+
+function isUpdateAction(req) {
+  const host = req.headers.host || '';
+  return /^(127\.0\.0\.1|localhost):\d+$/.test(host)
+    && req.headers.origin === 'http://' + host
+    && /^application\/json(?:\s*;|$)/i.test(req.headers['content-type'] || '');
 }
 
 function readBody(req, limit = 20 * 1024 * 1024) {
@@ -364,7 +372,30 @@ const api = {
 
   async appUpdate(req, res) {
     const r = await updateLib.check();
-    send(res, 200, r);
+    send(res, 200, { ...r, canInstall: r.hasUpdate && updater.supports(r.remote) });
+  },
+
+  async appUpdateStatus(req, res) {
+    send(res, 200, await updater.status());
+  },
+
+  async appUpdateDownload(req, res) {
+    if (!isUpdateAction(req)) return fail(res, 403, '请在软件内操作更新');
+    const { version } = await readBody(req, 1024);
+    if (typeof version !== 'string' || !/^\d+\.\d+\.\d+$/.test(version)) return fail(res, 400, '更新版本无效');
+    send(res, 202, await updater.start(version));
+  },
+
+  async appUpdateInstall(req, res) {
+    if (!isUpdateAction(req)) return fail(res, 403, '请在软件内操作更新');
+    await readBody(req, 1024);
+    const result = await updater.install(server.address().port);
+    send(res, 202, result);
+    setTimeout(() => {
+      server.close(() => process.exit(0));
+      server.closeIdleConnections?.();
+      setTimeout(() => process.exit(0), 3000).unref();
+    }, 600);
   },
 
   async quit(req, res) {
@@ -483,6 +514,9 @@ const ROUTES = [
   ['POST', /^\/api\/ai\/chat$/, api.aiChat],
   ['POST', /^\/api\/ai\/test$/, api.aiTest],
   ['GET', /^\/api\/app\/update$/, api.appUpdate],
+  ['GET', /^\/api\/app\/update\/status$/, api.appUpdateStatus],
+  ['POST', /^\/api\/app\/update\/download$/, api.appUpdateDownload],
+  ['POST', /^\/api\/app\/update\/install$/, api.appUpdateInstall],
   ['POST', /^\/api\/reveal$/, api.reveal],
   ['POST', /^\/api\/quit$/, api.quit],
   ['POST', /^\/api\/open-external$/, api.openExternal],

@@ -1,6 +1,7 @@
 {
-  "version": "0.1.7",
-  "update": 8,
-  "notes": "可直接导入 Word、PPT、Markdown、纯文本和 HTML。软件自动识别题目，按题型展示，并保留讲义或原文。",
-  "url": "https://github.com/makainuo/zailao-app/releases/download/v0.1.7/zailao-v0.1.7.zip"
+  "version": "0.1.8",
+  "update": 9,
+  "notes": "支持按课次展开复习目录。Windows 便携版可在软件内下载并校验完整更新包，确认后自动重启安装，启动失败时回退。",
+  "url": "https://github.com/makainuo/zailao-app/releases/download/v0.1.8/zailao-v0.1.8.zip",
+  "capabilities": ["lesson-navigation", "in-app-updates"]
 }

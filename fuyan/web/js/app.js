@@ -179,6 +179,7 @@ export function renderSide(manifest, activeSectionId) {
       <button class="btn sm" data-side="notes">✎ 批注</button>
     </div>
     <div class="side-foot">${esc(manifest.subtitle || '')}<br>v${esc(manifest.version || '')}</div>`;
+  arrangeLessonLinks(side, manifest.nav || []);
   side.querySelectorAll('[data-side]').forEach((b) => {
     b.onclick = () => go(b.dataset.side === 'quiz' ? `#/quiz/${manifest.id}` : `#/notes/${manifest.id}`);
   });
@@ -194,7 +195,49 @@ export function renderSide(manifest, activeSectionId) {
   });
 }
 
+// 可选的 parent 指向同一存档中的课次 sectionId。
+function arrangeLessonLinks(side, nav) {
+  const links = new Map([...side.querySelectorAll('a[data-section]')]
+    .map((link) => [link.dataset.section, link]));
+  const groups = new Map();
+  for (const entry of nav) {
+    if (!entry.parent || entry.parent === entry.sectionId) continue;
+    const parent = links.get(entry.parent);
+    const child = links.get(entry.sectionId);
+    if (!parent || !child) continue;
+    // 新版阅读器会为普通章节自动生成标题目录。逐课目录使用显式子项。
+    const parentItem = parent.closest('.side-item');
+    const childItem = child.closest('.side-item');
+    if (parentItem) parentItem.classList.remove('side-item');
+    if (childItem) childItem.classList.remove('side-item');
+    let group = groups.get(entry.parent);
+    if (!group) {
+      group = document.createElement('div');
+      group.id = 'lesson-children-' + entry.parent;
+      group.dataset.lessonChildren = entry.parent;
+      group.style.paddingInlineStart = '14px';
+      group.hidden = true;
+      parent.setAttribute('aria-controls', group.id);
+      parent.setAttribute('aria-expanded', 'false');
+      (parentItem || parent).after(group);
+      groups.set(entry.parent, group);
+    }
+    child.dataset.lessonParent = entry.parent;
+    group.append(childItem || child);
+  }
+}
+
 export function markSideActive(sectionId) {
+  const active = [...document.querySelectorAll('#side a[data-section]')]
+    .find((link) => link.dataset.section === sectionId);
+  const lesson = active?.dataset.lessonParent || sectionId;
+  document.querySelectorAll('#side [data-lesson-children]').forEach((group) => {
+    const open = group.dataset.lessonChildren === lesson;
+    group.hidden = !open;
+    const parent = [...document.querySelectorAll('#side a[aria-controls]')]
+      .find((link) => link.getAttribute('aria-controls') === group.id);
+    parent?.setAttribute('aria-expanded', String(open));
+  });
   document.querySelectorAll('#side a[data-section]').forEach((a) => {
     a.classList.toggle('on', a.dataset.section === sectionId);
   });
@@ -292,8 +335,8 @@ async function checkUpdateSoon() {
   } catch (_) {}
 }
 
-export function openUpdateBox() {
-  const r = updateInfo || {};
+export function openUpdateBox(info = updateInfo) {
+  const r = info || {};
   const remote = r.remote || {};
   const local = r.local || {};
   const canOpen = /^https?:\/\//.test(remote.url || '');
@@ -303,10 +346,14 @@ export function openUpdateBox() {
      ${r.ok ? '' : `<div class="note" style="margin-bottom:12px">${esc(r.message || '检查失败')}</div>`}
      ${r.ok && r.hasUpdate ? `<div class="verdict ok" style="margin:0 0 12px"><b>${esc(r.message)}</b></div>` : ''}
      ${remote.notes ? `<div class="note"><b>更新内容</b><br>${esc(remote.notes)}</div>` : ''}
+     <p class="sub" data-u="status" role="status" hidden></p>
+     <progress data-u="progress" max="100" style="width:100%" hidden></progress>
      <div class="foot">
        <button class="btn" data-u="close">关闭</button>
        <button class="btn" data-u="recheck">重新检查</button>
-       ${canOpen ? '<button class="btn primary" data-u="open">打开发布页</button>' : ''}
+       ${canOpen ? '<button class="btn" data-u="open">浏览器下载</button>' : ''}
+       ${r.canInstall ? '<button class="btn primary" data-u="download">下载并更新</button>' : ''}
+       <button class="btn primary" data-u="install" hidden>重启并安装</button>
        ${r.configured === false ? '<button class="btn" data-u="settings">去设置更新源</button>' : ''}
      </div>`,
     {
@@ -321,10 +368,78 @@ export function openUpdateBox() {
         if (o) o.onclick = () => api.openExternal(remote.url).catch(() => {});
         const s = el.querySelector('[data-u=settings]');
         if (s) s.onclick = () => { closeModal(); go('#/settings'); };
+        bindUpdateJob(el, remote.version);
       },
     }
   );
   return box;
+}
+
+function bindUpdateJob(box, version) {
+  const status = box.querySelector('[data-u=status]');
+  const progress = box.querySelector('[data-u=progress]');
+  const download = box.querySelector('[data-u=download]');
+  const install = box.querySelector('[data-u=install]');
+  let timer;
+  let restarting = false;
+  let restartDeadline = 0;
+
+  function draw(job) {
+    clearTimeout(timer);
+    const { phase, error, bytes, received } = job;
+    const fetching = phase === 'downloading' || phase === 'verifying';
+    const active = fetching || phase === 'ready' || phase === 'installing';
+    const percent = bytes ? Math.floor(received * 100 / bytes) : null;
+    const messages = {
+      downloading: percent === null ? '正在连接发布服务器…' : `正在下载更新 · ${percent}%`,
+      verifying: '正在校验并准备安装…',
+      ready: '下载和校验完成。可以重启并安装。',
+      installing: '正在安装，软件会自动重新连接…',
+      installed: `已更新到 v${job.version}`,
+      'rolled-back': '新版未能启动，已恢复旧版。',
+      error: '更新未完成。',
+    };
+    status.hidden = !messages[phase];
+    status.textContent = [messages[phase], error].filter(Boolean).join(' ');
+    progress.hidden = !fetching;
+    if (percent === null) progress.removeAttribute('value');
+    else progress.value = percent;
+    if (download) download.hidden = active || phase === 'installed';
+    install.hidden = phase !== 'ready';
+    install.disabled = false;
+    if (restarting && phase === 'installed') { location.reload(); return; }
+    if (restarting && ['rolled-back', 'error'].includes(phase)) restarting = false;
+    box.querySelector('[data-u=recheck]').disabled = restarting;
+    if (fetching || restarting || phase === 'installing') timer = setTimeout(poll, 650);
+  }
+
+  async function poll() {
+    if (!box.isConnected && !restarting) return;
+    if (restarting && Date.now() > restartDeadline) {
+      restarting = false;
+      draw({ phase: 'error', error: '软件暂未重新连接，请稍后从快捷方式打开。' });
+      return;
+    }
+    try {
+      draw(await api.appUpdateStatus());
+    } catch (error) {
+      if (restarting) timer = setTimeout(poll, 850);
+    }
+  }
+
+  if (download) download.onclick = async () => {
+    draw({ phase: 'downloading' });
+    try { draw(await api.appUpdateDownload(version)); }
+    catch (error) { draw({ phase: 'error', error: error.message }); }
+  };
+  install.onclick = async () => {
+    install.disabled = true;
+    restarting = true;
+    restartDeadline = Date.now() + 60000;
+    try { draw(await api.appUpdateInstall()); }
+    catch (error) { restarting = false; draw({ phase: 'error', error: error.message }); }
+  };
+  void poll();
 }
 
 /* 供视图调用 */
@@ -339,6 +454,7 @@ export const App = {
   updateNoteCount,
   archiveCache,
   updateHeader,
+  openUpdateBox,
   emit,
   state,
 };
